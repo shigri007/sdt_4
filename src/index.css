@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply antialiased text-slate-900 bg-slate-100/70;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  button, input, select, textarea { font: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid #14b8a6; outline-offset: 2px; }
+}
+
+.login-hero { background: radial-gradient(circle at 75% 23%, #155f67 0%, transparent 31%), linear-gradient(145deg,#081f2c 0%,#0b2c39 55%,#09212f 100%); }
+.login-grid { opacity: .35; background-image: linear-gradient(to right,#b9e9e714 1px,transparent 1px),linear-gradient(to bottom,#b9e9e714 1px,transparent 1px); background-size: 44px 44px; mask-image: linear-gradient(90deg,transparent 0%,black 50%); }
+.brand-mark { width:36px; height:36px; flex:none; color:#e8fffc; border-radius:11px; background:linear-gradient(150deg,#087b82,#0e5969); box-shadow:0 8px 20px #054c5950; }
+.login-feature { transition:transform .24s ease, background .24s ease,border-color .24s ease; }
+.login-feature:hover { transform:translateY(-4px); background:#ffffff16; border-color:#80d8d04a; }
+.login-input { transition:border-color .2s ease, box-shadow .2s ease; }
+.login-input:focus { border-color:#0f928b; box-shadow:0 0 0 4px #16a3941a; }
+.login-submit { background:linear-gradient(110deg,#0f766e,#075e68); box-shadow:0 12px 25px #0d766d30; transition: transform .2s ease,box-shadow .2s ease,filter .2s ease; }
+.login-submit:hover { transform:translateY(-2px); box-shadow:0 16px 27px #0d766d40; filter:brightness(1.06); }
+.app-main { background: radial-gradient(circle at 94% 0%,#e0f1ef 0,transparent 28%),#f5f8fa; }
+.app-main > div { animation:enter .4s ease both; }
+.app-main h1 { font-size:clamp(1.45rem,2vw,2rem); letter-spacing:-.035em; }
+.app-main .shadow-xs { box-shadow:0 3px 14px #173e4910; }
+.app-main table tbody tr { transition:background .18s ease; }
+.app-sidebar { background:linear-gradient(175deg,#0e2b39,#122a3b 55%,#13283a); }
+.app-sidebar button { min-height:38px; }
+.app-topbar { box-shadow:0 2px 18px #16374307; }
+.animate-enter { animation:enter .55s ease both; }
+@keyframes enter { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
+@media (max-width:800px) { .app-sidebar { width:64px; } .app-sidebar .space-y-6 span:not(.font-mono) { display:none; } .app-sidebar .space-y-6 > div > div.px-3 { display:none; } .app-sidebar .p-4,.app-sidebar .p-3:last-child { display:none; } .app-sidebar .space-y-6 button { justify-content:center; padding:10px; } .app-sidebar .space-y-6 button>div { gap:0; } }
+
+/* Sleek Minimal Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dedicated Print Styles for Sterile QR Tag */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-qr-tag, #printable-qr-tag * {
+    visibility: visible;
+  }
+  #printable-qr-tag {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    border: 2px solid #000 !important;
+    background: #fff !important;
+  }
+}
