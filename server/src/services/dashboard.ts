@@ -1,7 +1,3 @@
-// ==========================================================
-// SteriTrack: Role-Specific Dashboard Metrics Service
-// Derives live statistics with zero hardcoding
-// ==========================================================
 
 import { db } from '../db/index.js';
 import { AuthenticatedUser } from '../middleware/auth.js';

@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Reprocessing Authorization Modal
 // Spawns Attempt #N while preserving immutable failed attempts
-// ==========================================================
 
 import React, { useState } from 'react';
 import { Modal } from './Modal.js';
@@ -66,7 +63,6 @@ export const ReprocessModal: React.FC<ReprocessModalProps> = ({
       maxWidth="md"
     >
       <form onSubmit={handleReprocess} className="space-y-4">
-        {/* Core Differentiation Notice */}
         <div className="p-3 bg-amber-50 border border-amber-200/90 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
           <History className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
           <div>

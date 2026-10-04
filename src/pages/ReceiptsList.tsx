@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Clinical Receipts & Kit Return Management
 // Department staff verifies delivery and returns used kits
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
@@ -28,7 +25,6 @@ export const ReceiptsList: React.FC = () => {
   const [selectedDispatchForReceipt, setSelectedDispatchForReceipt] = useState<DispatchRecord | null>(null);
   const [selectedKitToReturn, setSelectedKitToReturn] = useState<Kit | null>(null);
 
-  // Form states
   const [packagingIntact, setPackagingIntact] = useState(true);
   const [indicatorVerified, setIndicatorVerified] = useState(true);
   const [conditionNotes, setConditionNotes] = useState('Sterile barrier wrap intact; Class 5 integrator verified dark brown.');
@@ -114,7 +110,6 @@ export const ReceiptsList: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-xl font-bold tracking-tight text-slate-900">
           Clinical Delivery Receipt & Used Kit Returns
@@ -124,7 +119,6 @@ export const ReceiptsList: React.FC = () => {
         </p>
       </div>
 
-      {/* Incoming Dispatches Awaiting Confirmation */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
@@ -169,7 +163,6 @@ export const ReceiptsList: React.FC = () => {
         </div>
       </div>
 
-      {/* Kits Currently in Procedure / At Department (Ready for Return) */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
@@ -212,7 +205,6 @@ export const ReceiptsList: React.FC = () => {
         </div>
       </div>
 
-      {/* Confirm Receipt Modal */}
       <Modal
         isOpen={Boolean(selectedDispatchForReceipt)}
         onClose={() => setSelectedDispatchForReceipt(null)}
@@ -287,7 +279,6 @@ export const ReceiptsList: React.FC = () => {
         </form>
       </Modal>
 
-      {/* Return Contaminated Kit Modal */}
       <Modal
         isOpen={Boolean(selectedKitToReturn)}
         onClose={() => setSelectedKitToReturn(null)}

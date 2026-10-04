@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Kit Full-Lifecycle Traceability Service
 // Provides immutable vertical timeline and attempt history
-// ==========================================================
 
 import QRCode from 'qrcode';
 import { db, DbKit, DbProcessingAttempt } from '../db/index.js';

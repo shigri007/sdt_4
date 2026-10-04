@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Semantic Status and Priority Badges
-// ==========================================================
 
 import React from 'react';
 import { KitStatusCode, PriorityCode } from '../types/index.js';

@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Alerts & Notification Engine
 // Derives real-time clinical safety and workflow alerts
-// ==========================================================
 
 import { db } from '../db/index.js';
 

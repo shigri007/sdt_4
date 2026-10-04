@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Printable QR Kit Tag Modal
-// ==========================================================
 
 import React from 'react';
 import { Modal } from './Modal.js';
@@ -30,7 +27,6 @@ export const QRModal: React.FC<QRModalProps> = ({ isOpen, onClose, kit, qrCodeUr
       maxWidth="md"
     >
       <div className="flex flex-col items-center">
-        {/* Printable Card Area */}
         <div id="printable-qr-tag" className="w-full border-2 border-dashed border-slate-300 rounded-xl p-6 bg-slate-50 flex flex-col items-center text-center">
           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
             <ShieldCheck className="w-4 h-4 text-teal-600" />
@@ -56,7 +52,6 @@ export const QRModal: React.FC<QRModalProps> = ({ isOpen, onClose, kit, qrCodeUr
           </div>
         </div>
 
-        {/* Action Controls */}
         <div className="flex items-center justify-end gap-3 w-full mt-6 pt-4 border-t border-slate-100">
           <button
             onClick={onClose}

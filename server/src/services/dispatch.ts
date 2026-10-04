@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Atomic Dispatch and Clinical Receipt Service
 // Enforces transaction boundaries and strict dispatch eligibility
-// ==========================================================
 
 import { db, DbDispatch, DbReceipt } from '../db/index.js';
 import { AuthenticatedUser } from '../middleware/auth.js';
@@ -49,9 +46,7 @@ export class DispatchService {
       }
       if (request.quantity > 1 && !input.allowPartial) throw new Error('Select every required kit and dispatch the request together.');
 
-      // =========================================================================
-      // MANDATORY ELIGIBILITY VALIDATION RULES
-      // =========================================================================
+      // Validate every selected kit before committing the dispatch.
 
       // Rule A: Current status must be AVAILABLE (not Quarantined, not Returned, not Processing)
       if (kit.current_status !== 'AVAILABLE') {

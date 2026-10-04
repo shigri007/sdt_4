@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Append-Only Audit Trail
 // Searchable application event history
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
@@ -53,7 +50,6 @@ export const AuditTrail: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
@@ -66,7 +62,6 @@ export const AuditTrail: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
         <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -109,7 +104,6 @@ export const AuditTrail: React.FC = () => {
         </div>
       </div>
 
-      {/* Audit Log Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">

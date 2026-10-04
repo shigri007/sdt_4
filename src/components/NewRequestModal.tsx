@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: New Kit Requisition Modal
-// ==========================================================
 
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal.js';
@@ -100,7 +97,6 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
       maxWidth="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Department Selection */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">Requesting Department</label>
           <select
@@ -120,7 +116,6 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
           )}
         </div>
 
-        {/* Kit Type Selection */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">Required Kit Type</label>
           <select
@@ -136,7 +131,6 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
           </select>
         </div>
 
-        {/* Priority & Quantity */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Priority</label>
@@ -163,7 +157,6 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
           </div>
         </div>
 
-        {/* Clinical Reason */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">
             Clinical Reason & Procedure Details <span className="text-rose-500">*</span>

@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Authentication & Role-Based Access Control
-// ==========================================================
 
 import { Request, Response, NextFunction } from 'express';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';

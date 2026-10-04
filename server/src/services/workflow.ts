@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Reprocessing Workflow State Machine Service
-// ==========================================================
 
 import { KIT_STATUS, KitStatusCode, VALID_WORKFLOW_TRANSITIONS } from '../config/index.js';
 import { db, DbKit } from '../db/index.js';
@@ -43,7 +40,6 @@ export class WorkflowService {
 
     const currentStatus = kit.current_status as KitStatusCode;
 
-    // Check if target is same as current
     if (currentStatus === targetStatus) {
       return { success: true, kit, message: `Kit is already in state ${targetStatus}` };
     }
@@ -74,7 +70,6 @@ export class WorkflowService {
       }
     }
 
-    // State machine graph check
     if (!this.isValidTransition(currentStatus, targetStatus)) {
       const allowed = (VALID_WORKFLOW_TRANSITIONS[currentStatus] || []).join(', ') || 'None (Terminal)';
       throw new Error(
@@ -130,7 +125,6 @@ export class WorkflowService {
       }
     }
 
-    // Update Kit fields
     kit.current_status = targetStatus;
     kit.updated_at = now;
 
@@ -164,7 +158,6 @@ export class WorkflowService {
       kit.notes = options.notes;
     }
 
-    // Audit Event
     logAudit({
       actor,
       entityType: 'KIT',

@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Kit Registry & Inventory Catalog
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
@@ -34,12 +31,10 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Filters
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
 
-  // Modals
   const [selectedKitForQr, setSelectedKitForQr] = useState<Kit | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
@@ -126,7 +121,6 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900">Hospital Kit Registry</h1>
@@ -157,7 +151,6 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
         <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -171,7 +164,6 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
         </form>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
-          {/* Status Filter */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -191,7 +183,6 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
             <option value="EXPIRED">Expired</option>
           </select>
 
-          {/* Kit Type Filter */}
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
@@ -220,7 +211,6 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
         </div>
       </div>
 
-      {/* Registry Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
@@ -309,7 +299,6 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
         </div>
       </div>
 
-      {/* QR Print Modal */}
       <QRModal
         isOpen={isQrModalOpen}
         onClose={() => setIsQrModalOpen(false)}
@@ -317,7 +306,6 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
         qrCodeUrl={qrCodeUrl}
       />
 
-      {/* Register New Kit Modal */}
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

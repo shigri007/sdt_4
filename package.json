@@ -2,14 +2,9 @@
   "name": "steritrack",
   "version": "1.0.0",
   "private": true,
-  "description": "A local, role-based kit reprocessing and traceability application built with React, TypeScript, Express and SQLite. It connects kit receiving, cleaning, inspection, packing, batch processing, independent quality review, requests, dispatch, receipt, quarantine and reporting in one interface.",
+  "description": "Role-based hospital kit reprocessing and traceability application built with React, Express and SQLite.",
   "license": "ISC",
-  "author": "",
   "type": "module",
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
   "scripts": {
     "dev": "tsx server.ts",
     "build": "tsc --noEmit && vite build",

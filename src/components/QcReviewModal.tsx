@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Independent Quality Control Review Modal
 // Enforces mandatory segregation of duties check
-// ==========================================================
 
 import React, { useState } from 'react';
 import { Modal } from './Modal.js';
@@ -85,7 +82,6 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Safety Violation Warning if Self-Run */}
         {isOperatorSelfReview ? (
           <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-900 flex items-start gap-3">
             <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
@@ -108,7 +104,6 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
           </div>
         )}
 
-        {/* Batch Overview Data */}
         <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs">
           <div>
             <span className="text-slate-500">Sterilizer Method:</span>{' '}
@@ -130,7 +125,6 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
           </div>
         </div>
 
-        {/* Decision Toggle */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">Quality Control Decision</label>
           <div className="grid grid-cols-2 gap-3">
@@ -167,7 +161,6 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
           </div>
         </div>
 
-        {/* Verification Checkpoints */}
         <div className="space-y-3">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -217,7 +210,6 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
           </div>
         </div>
 
-        {/* Action Controls */}
         <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
           <button
             type="button"

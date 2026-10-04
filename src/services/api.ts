@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Frontend API Client
-// ==========================================================
 
 const API_BASE = '/api';
 let csrfToken = '';
@@ -49,7 +46,6 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
-  // Auth
   login: (credentials: { username: string; password?: string }) =>
     request<{ success: boolean; csrfToken: string; user: any }>('/auth/login', {
       method: 'POST',
@@ -58,14 +54,12 @@ export const api = {
   getMe: () => request<{ success: boolean; csrfToken: string; user: any }>('/auth/me'),
   logout: () => request<{ success: boolean }>('/auth/logout', { method: 'POST' }),
 
-  // Health
   getHealth: () => request<any>('/health'),
 
   // Dashboard & Alerts
   getDashboard: () => request<{ success: boolean; data: any }>('/dashboard'),
   getAlerts: () => request<{ success: boolean; data: any[] }>('/alerts'),
 
-  // Kits
   getKits: (params: Record<string, string> = {}) => {
     const query = new URLSearchParams(params).toString();
     return request<{ success: boolean; data: any[]; total: number }>(`/kits${query ? '?' + query : ''}`);
@@ -91,7 +85,6 @@ export const api = {
       body: JSON.stringify({ notes }),
     }),
 
-  // Batches
   getBatches: () => request<{ success: boolean; data: any[] }>('/batches'),
   getBatchById: (id: number) => request<{ success: boolean; data: any }>(`/batches/${id}`),
   createBatch: (batchData: any) =>
@@ -126,7 +119,6 @@ export const api = {
       body: JSON.stringify({ justification }),
     }),
 
-  // Requests
   getRequests: () => request<{ success: boolean; data: any[] }>('/requests'),
   createRequest: (reqData: any) =>
     request<{ success: boolean; data: any }>('/requests', {

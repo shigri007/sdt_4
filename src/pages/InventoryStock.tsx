@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Stock Availability & Derived Inventory
 // Zero arbitrary duplicated counts; strictly derived from kit records
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
@@ -39,7 +36,6 @@ export const InventoryStock: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-xl font-bold tracking-tight text-slate-900">
           Derived Inventory & Stock Availability
@@ -49,7 +45,6 @@ export const InventoryStock: React.FC = () => {
         </p>
       </div>
 
-      {/* Aggregate KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <StatCard label="Total Physical Kits" value={totalStock} icon={Boxes} variant="default" />
         <StatCard label="Available for Dispatch" value={totalAvailable} icon={CheckCircle2} variant="success" />
@@ -59,7 +54,6 @@ export const InventoryStock: React.FC = () => {
         <StatCard label="Sterility Expired" value={totalExpired} icon={AlertTriangle} variant={totalExpired > 0 ? 'warning' : 'default'} />
       </div>
 
-      {/* Breakdown by Kit Type */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">

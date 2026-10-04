@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Independent Quality Control Service
 // Enforces mandatory segregation of duties between operator & QC
-// ==========================================================
 
 import { db, DbQcReview } from '../db/index.js';
 import { AuthenticatedUser } from '../middleware/auth.js';
@@ -27,10 +24,7 @@ export class QcService {
       throw new Error(`Sterilization batch with ID ${input.batchId} not found.`);
     }
 
-    // =========================================================================
-    // MANDATORY HEALTHCARE SAFETY INVARIANT: INDEPENDENT QUALITY CONTROL CHECK
-    // An operator who processed a batch MUST NOT approve their own QC decision!
-    // =========================================================================
+    // The batch operator cannot approve their own quality review.
     if (batch.operator_id === actor.id) {
       throw new Error(
         'Compliance & Safety Violation: Operator who ran this sterilization batch is strictly prohibited from approving their own Quality Control review. Independent verification by a secondary Sterile Quality Coordinator is mandatory.'

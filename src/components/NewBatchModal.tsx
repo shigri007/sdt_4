@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: New Sterilization Batch Modal
-// ==========================================================
 
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal.js';
@@ -45,7 +42,6 @@ export const NewBatchModal: React.FC<NewBatchModalProps> = ({
       const res = await api.getKits({ status: 'PACKING' });
       if (res.success) {
         setPackedKits(res.data);
-        // Pre-select all packed kits
         setSelectedKitIds(res.data.map((k) => k.id));
       }
     } catch (err: any) {
@@ -107,7 +103,6 @@ export const NewBatchModal: React.FC<NewBatchModalProps> = ({
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Sterilizer Selection */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Sterilizer Unit</label>
@@ -137,7 +132,6 @@ export const NewBatchModal: React.FC<NewBatchModalProps> = ({
           </div>
         </div>
 
-        {/* Parameters */}
         <div className="grid grid-cols-3 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
           <div>
             <label className="block text-[11px] font-semibold text-slate-600 mb-1">Plateau Temp (°C)</label>
@@ -170,7 +164,6 @@ export const NewBatchModal: React.FC<NewBatchModalProps> = ({
           </div>
         </div>
 
-        {/* Kit Loading Selection */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-xs font-semibold text-slate-700">

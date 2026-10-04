@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Kit Requisitions & Priority Management
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
@@ -32,7 +29,6 @@ export const RequestsList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Modals
   const [selectedReqForPriority, setSelectedReqForPriority] = useState<KitRequest | null>(null);
   const [selectedReqForDispatch, setSelectedReqForDispatch] = useState<KitRequest | null>(null);
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
@@ -78,7 +74,6 @@ export const RequestsList: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900">
@@ -100,7 +95,6 @@ export const RequestsList: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button
@@ -159,7 +153,6 @@ export const RequestsList: React.FC = () => {
         </div>
       </div>
 
-      {/* Requests Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
@@ -285,7 +278,6 @@ export const RequestsList: React.FC = () => {
         </div>
       </div>
 
-      {/* Priority Modal */}
       <PriorityModal
         isOpen={Boolean(selectedReqForPriority)}
         onClose={() => setSelectedReqForPriority(null)}
@@ -293,7 +285,6 @@ export const RequestsList: React.FC = () => {
         onUpdated={loadRequests}
       />
 
-      {/* Dispatch Modal */}
       <DispatchModal
         isOpen={Boolean(selectedReqForDispatch)}
         onClose={() => setSelectedReqForDispatch(null)}
@@ -301,14 +292,12 @@ export const RequestsList: React.FC = () => {
         onDispatched={loadRequests}
       />
 
-      {/* New Request Modal */}
       <NewRequestModal
         isOpen={isNewRequestOpen}
         onClose={() => setIsNewRequestOpen(false)}
         onCreated={loadRequests}
       />
 
-      {/* Priority History Modal */}
       <Modal
         isOpen={isHistoryModalOpen}
         onClose={() => setIsHistoryModalOpen(false)}

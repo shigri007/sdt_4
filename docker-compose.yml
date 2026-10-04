@@ -8,7 +8,7 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       DATABASE_PATH: /app/data/steritrack.sqlite
-      INITIAL_PASSWORD: ${INITIAL_PASSWORD:?Set INITIAL_PASSWORD in your shell or .env before the first run}
+      INITIAL_PASSWORD: ${INITIAL_PASSWORD:?Set INITIAL_PASSWORD in shell or .env before the first run}
     volumes:
       - steritrack_data:/app/data
     restart: unless-stopped

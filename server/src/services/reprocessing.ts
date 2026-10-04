@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Quarantine & Reprocessing Service
 // Ensures failed attempts remain immutable in historical ledger
-// ==========================================================
 
 import { db, DbKit, DbProcessingAttempt, DbQuarantineRecord } from '../db/index.js';
 import { AuthenticatedUser } from '../middleware/auth.js';

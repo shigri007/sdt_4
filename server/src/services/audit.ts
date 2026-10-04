@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Audit Trail Service (Append-Only)
-// ==========================================================
 
 import { db, DbAuditEvent } from '../db/index.js';
 import { AuthenticatedUser } from '../middleware/auth.js';

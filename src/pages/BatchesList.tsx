@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Sterilization Batches Management
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
@@ -110,7 +107,6 @@ export const BatchesList: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900">Sterilization Batches</h1>
@@ -132,7 +128,6 @@ export const BatchesList: React.FC = () => {
         </div>
       </div>
 
-      {/* Batches Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
@@ -275,14 +270,12 @@ export const BatchesList: React.FC = () => {
         </div>
       </div>
 
-      {/* New Batch Modal */}
       <NewBatchModal
         isOpen={isNewBatchOpen}
         onClose={() => setIsNewBatchOpen(false)}
         onBatchCreated={loadBatches}
       />
 
-      {/* Complete Batch Modal */}
       <Modal
         isOpen={Boolean(batchToComplete)}
         onClose={() => setBatchToComplete(null)}
@@ -346,7 +339,6 @@ export const BatchesList: React.FC = () => {
         </form>
       </Modal>
 
-      {/* Fail Batch Modal */}
       <Modal
         isOpen={Boolean(batchToFail)}
         onClose={() => setBatchToFail(null)}
@@ -393,7 +385,6 @@ export const BatchesList: React.FC = () => {
         </form>
       </Modal>
 
-      {/* Batch Detail Modal */}
       <Modal
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}

@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Kit Full-Lifecycle Traceability Page
 // Core Differentiating Feature: Complete Immutable Audit Timeline
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
@@ -87,7 +84,6 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Back button & Title */}
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
@@ -107,7 +103,6 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
         </div>
       </div>
 
-      {/* Hero Kit Identification Card */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-slate-100">
           <div>
@@ -140,7 +135,6 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
           </div>
         </div>
 
-        {/* Metadata Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 text-xs">
           <div>
             <span className="text-slate-400 block text-[11px]">Current Location:</span>
@@ -176,9 +170,6 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
         </div>
       </div>
 
-      {/* ========================================================= */}
-      {/* PROCESSING ATTEMPT HISTORY (CRITICAL DIFFERENTIATING FEATURE) */}
-      {/* ========================================================= */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -255,7 +246,6 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
                     <span className="font-medium text-slate-800">{att.reviewerName}</span>
                   </div>
 
-                  {/* Failure Details Callout */}
                   {isFailed && att.failure_reason && (
                     <div className="mt-2 p-2.5 rounded-lg bg-rose-100/70 border border-rose-200 text-rose-900 text-xs">
                       <strong className="block text-[11px] uppercase tracking-wider text-rose-800 font-bold mb-0.5">
@@ -277,9 +267,6 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
         </div>
       </div>
 
-      {/* ========================================================= */}
-      {/* VERTICAL CHRONOLOGICAL AUDIT TIMELINE */}
-      {/* ========================================================= */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
         <div>
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -298,7 +285,6 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
 
             return (
               <div key={event.id || idx} className="relative flex items-start gap-4 group">
-                {/* Timeline Node Dot */}
                 <div
                   className={`absolute -left-6 top-1 w-5 h-5 rounded-full border-2 bg-white flex items-center justify-center ${
                     isFail
@@ -315,7 +301,6 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
                   />
                 </div>
 
-                {/* Event Card */}
                 <div
                   className={`flex-1 p-4 rounded-xl border text-xs transition-shadow ${
                     isFail
@@ -366,7 +351,6 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
         </div>
       </div>
 
-      {/* QR Modal */}
       <QRModal
         isOpen={isQrModalOpen}
         onClose={() => setIsQrModalOpen(false)}

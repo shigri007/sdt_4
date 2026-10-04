@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Staff User Management (Admin Only)
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
@@ -82,7 +79,6 @@ export const UserManagement: React.FC = () => {
       </section> : <>
       <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-slate-900">Staff accounts</h2><span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">{users.length} accounts</span></div>
 
-      {/* Users Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">

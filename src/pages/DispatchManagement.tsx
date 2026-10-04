@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Dispatch Terminal & Transport Logistics
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
@@ -57,7 +54,6 @@ export const DispatchManagement: React.FC<DispatchManagementProps> = ({ onSelect
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900">
@@ -69,7 +65,6 @@ export const DispatchManagement: React.FC<DispatchManagementProps> = ({ onSelect
         </div>
       </div>
 
-      {/* Safety Notice */}
       <div className="p-4 bg-teal-50 border border-teal-200/90 rounded-xl text-xs text-teal-900 flex items-start gap-3">
         <ShieldCheck className="w-5 h-5 text-teal-700 shrink-0 mt-0.5" />
         <div>
@@ -80,7 +75,6 @@ export const DispatchManagement: React.FC<DispatchManagementProps> = ({ onSelect
         </div>
       </div>
 
-      {/* Pending Requisitions Ready for Dispatch */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
@@ -123,7 +117,6 @@ export const DispatchManagement: React.FC<DispatchManagementProps> = ({ onSelect
         </div>
       </div>
 
-      {/* Dispatched History */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-slate-200">
           <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
@@ -195,7 +188,6 @@ export const DispatchManagement: React.FC<DispatchManagementProps> = ({ onSelect
         </div>
       </div>
 
-      {/* Dispatch Modal */}
       <DispatchModal
         isOpen={Boolean(selectedReqForDispatch)}
         onClose={() => setSelectedReqForDispatch(null)}

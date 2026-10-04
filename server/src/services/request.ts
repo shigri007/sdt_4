@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Requisition & Priority Management Service
-// ==========================================================
 
 import { PRIORITY, PriorityCode } from '../config/index.js';
 import { db, DbRequest, DbRequestPriorityHistory } from '../db/index.js';
@@ -114,7 +111,6 @@ export class RequestService {
 
     db.store.request_priority_history.unshift(historyEntry);
 
-    // Update request
     request.priority = newPriority;
 
     logAudit({

@@ -1,7 +1,3 @@
-// ==========================================================
-// SteriTrack: Database Abstraction Layer
-// File-backed SQLite storage for a single local SteriTrack instance.
-// ==========================================================
 
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
@@ -202,9 +198,7 @@ export interface DbAuditEvent {
   created_at: string;
 }
 
-// -------------------------------------------------------------
 // Domain model held in memory while a request runs; SQLite is durable storage.
-// -------------------------------------------------------------
 class RelationalMemoryStore {
   departments: DbDepartment[] = [];
   roles: { id: number; code: string; name: string; description: string }[] = [];
@@ -267,7 +261,6 @@ class RelationalMemoryStore {
   seedDefaultData() {
     if (this.isInitialized) return;
 
-    // Roles
     this.roles = [
       { id: 1, code: 'ADMINISTRATOR', name: 'System Administrator', description: 'Full system management and audits' },
       { id: 2, code: 'DEPARTMENT_STAFF', name: 'Department Clinical Staff', description: 'Requisitions, receipt and kit return' },
@@ -276,7 +269,6 @@ class RelationalMemoryStore {
     ];
     this.nextIds.roles = 5;
 
-    // Departments
     this.departments = [
       { id: 1, code: 'SURG', name: 'Surgical Services & Operating Theatres', building: 'North Surgical Pavilion', floor: 'Level 3 - Suites A-H', phone: '+1 (555) 019-3341', is_active: 1, created_at: '2026-09-20 08:00:00', updated_at: '2026-09-20 08:00:00' },
       { id: 2, code: 'ER', name: 'Emergency & Trauma Department', building: 'East Ambulatory Wing', floor: 'Ground Level', phone: '+1 (555) 019-3382', is_active: 1, created_at: '2026-09-20 08:00:00', updated_at: '2026-09-20 08:00:00' },
@@ -299,7 +291,6 @@ class RelationalMemoryStore {
     ];
     this.nextIds.users = 9;
 
-    // Kit Types
     this.kit_types = [
       { id: 1, code: 'KT-GENSURG', name: 'Major General Laparotomy Kit', category: 'General Surgery', standard_sterilization_method: 'STEAM_AUTOCLAVE', cycle_duration_minutes: 45, shelf_life_days: 30, instrument_count: 48, instructions: 'Triple biological spore test. Wrap in double non-woven SMS wrap.', created_at: '2026-09-20 08:00:00' },
       { id: 2, code: 'KT-ORTHO-HIP', name: 'Total Hip Arthroplasty Implant Prep Set', category: 'Orthopedics', standard_sterilization_method: 'STEAM_AUTOCLAVE', cycle_duration_minutes: 60, shelf_life_days: 30, instrument_count: 36, instructions: 'Heavy tray. Ensure weight does not exceed 11.4kg (25 lbs).', created_at: '2026-09-20 08:00:00' },
@@ -310,7 +301,6 @@ class RelationalMemoryStore {
     ];
     this.nextIds.kit_types = 7;
 
-    // Kits
     this.kits = [
       { id: 1, kit_code: 'KIT-0001', kit_name: 'General Surgery Laparotomy Tray #1', kit_type_id: 1, department_owner_id: 1, current_status: 'AVAILABLE', current_location: 'Sterile Storage Bay A-01', processing_attempt_number: 1, expiration_date: '2026-11-20', last_processed_at: '2026-10-01 06:30:00', total_cycles_count: 14, notes: 'All instruments verified and intact.', created_at: '2026-09-20 08:00:00', updated_at: '2026-10-01 08:00:00' },
       { id: 2, kit_code: 'KIT-0002', kit_name: 'General Surgery Laparotomy Tray #2', kit_type_id: 1, department_owner_id: 1, current_status: 'AVAILABLE', current_location: 'Sterile Storage Bay A-02', processing_attempt_number: 1, expiration_date: '2026-11-22', last_processed_at: '2026-10-01 07:15:00', total_cycles_count: 12, notes: 'Pre-vacuum autoclave cycle passed.', created_at: '2026-09-20 08:00:00', updated_at: '2026-10-01 08:00:00' },
@@ -335,7 +325,6 @@ class RelationalMemoryStore {
     ];
     this.nextIds.kits = 21;
 
-    // Batches
     this.batches = [
       { id: 1, batch_code: 'BAT-2026-0001', operator_id: 4, sterilizer_unit_id: 'Autoclave Unit #1 (Steris AMSCO)', processing_method: 'STEAM_AUTOCLAVE', target_temperature_c: 134.0, target_pressure_psi: 30.5, exposure_time_minutes: 18, started_at: '2026-09-30 06:00:00', completed_at: '2026-09-30 07:15:00', status: 'COMPLETED', physical_indicators_passed: 1, chemical_indicators_passed: 1, biological_indicators_passed: 1, processing_notes: 'Routine morning pre-vacuum run. All parameters within ISO tolerances.', created_at: '2026-09-30 06:00:00' },
       { id: 2, batch_code: 'BAT-2026-0002', operator_id: 5, sterilizer_unit_id: 'Autoclave Unit #1 (Steris AMSCO)', processing_method: 'STEAM_AUTOCLAVE', target_temperature_c: 134.0, target_pressure_psi: 30.5, exposure_time_minutes: 18, started_at: '2026-09-30 14:00:00', completed_at: '2026-09-30 15:20:00', status: 'FAILED', physical_indicators_passed: 1, chemical_indicators_passed: 1, biological_indicators_passed: 0, processing_notes: 'FAILED RUN: Rapid readout biological indicator showed fluorescence at 24 mins. Entire load quarantined!', created_at: '2026-09-30 14:00:00' },
@@ -345,7 +334,6 @@ class RelationalMemoryStore {
     ];
     this.nextIds.batches = 6;
 
-    // Batch Kits
     this.batch_kits = [
       { id: 1, batch_id: 1, kit_id: 1, attempt_number: 1, created_at: '2026-09-30 06:00:00' },
       { id: 2, batch_id: 1, kit_id: 2, attempt_number: 1, created_at: '2026-09-30 06:00:00' },
@@ -359,7 +347,7 @@ class RelationalMemoryStore {
     ];
     this.nextIds.batch_kits = 10;
 
-    // Processing Attempts (NEVER OVERWRITTEN)
+    // Processing attempts remain separate records across reprocessing cycles.
     this.processing_attempts = [
       { id: 1, kit_id: 1, attempt_number: 1, batch_id: 1, received_at: '2026-09-30 04:00:00', cleaned_at: '2026-09-30 04:45:00', inspected_at: '2026-09-30 05:15:00', packed_at: '2026-09-30 05:45:00', result: 'PASSED', qc_status: 'APPROVED', operator_id: 4, reviewer_id: 6, failure_reason: null, notes: 'Clean processing run.', created_at: '2026-09-30 04:00:00' },
       { id: 2, kit_id: 2, attempt_number: 1, batch_id: 1, received_at: '2026-09-30 04:10:00', cleaned_at: '2026-09-30 04:50:00', inspected_at: '2026-09-30 05:20:00', packed_at: '2026-09-30 05:50:00', result: 'PASSED', qc_status: 'APPROVED', operator_id: 4, reviewer_id: 6, failure_reason: null, notes: 'Full check complete.', created_at: '2026-09-30 04:10:00' },
@@ -389,7 +377,6 @@ class RelationalMemoryStore {
     ];
     this.nextIds.quarantine_records = 4;
 
-    // Requests
     this.requests = [
       { id: 1, request_code: 'REQ-2026-0001', department_id: 1, requested_by_user_id: 2, kit_type_id: 1, quantity: 1, priority: 'URGENT', clinical_reason: 'Emergency bowel resection scheduled for 11:30 in OR Suite 3. Patient presenting with acute peritonitis.', status: 'FULFILLED', required_by_date: '2026-10-01 11:00:00', created_at: '2026-10-01 08:30:00', approved_at: '2026-10-01 08:45:00', completed_at: '2026-10-01 10:50:00' },
       { id: 2, request_code: 'REQ-2026-0002', department_id: 2, requested_by_user_id: 3, kit_type_id: 3, quantity: 1, priority: 'URGENT', clinical_reason: 'Multiple trauma inbound via EMS - high speed motor vehicle collision with chest trauma.', status: 'PENDING', required_by_date: '2026-10-01 12:30:00', created_at: '2026-10-01 09:15:00', approved_at: '2026-10-01 09:20:00', completed_at: null },
@@ -411,20 +398,17 @@ class RelationalMemoryStore {
     ];
     this.nextIds.request_priority_history = 3;
 
-    // Dispatches
     this.dispatches = [
       { id: 1, dispatch_code: 'DSP-2026-0001', request_id: 1, kit_id: 12, dispatched_by_user_id: 6, recipient_department_id: 1, status: 'DISPATCHED', transport_case_id: 'CASE-RED-SECURE-09', dispatch_notes: 'Dispatched for Urgent Peritonitis surgery. Reprocessed kit KIT-0012 with Attempt #2 pass. Seal tag #88412.', dispatched_at: '2026-10-01 10:48:00' },
       { id: 2, dispatch_code: 'DSP-2026-0002', request_id: 8, kit_id: 20, dispatched_by_user_id: 7, recipient_department_id: 3, status: 'RECEIVED', transport_case_id: 'CASE-BLUE-MED-04', dispatch_notes: 'Delivered to Dental Clinic receptionist. Biological indicator card confirmed negative.', dispatched_at: '2026-09-22 12:45:00' },
     ];
     this.nextIds.dispatches = 3;
 
-    // Receipts
     this.receipts = [
       { id: 1, dispatch_id: 2, kit_id: 20, received_by_user_id: 1, recipient_department_id: 3, packaging_intact: 1, indicator_color_verified: 1, condition_notes: 'Verified pouch sterile seal unbroken. External tape turned dark brown. Received in excellent condition.', received_at: '2026-09-22 13:05:00' },
     ];
     this.nextIds.receipts = 2;
 
-    // Audit Events
     this.audit_events = [
       { id: 1, actor_user_id: 1, actor_name: 'Dr. Evelyn Vance', actor_role: 'ADMINISTRATOR', entity_type: 'SYSTEM', entity_id: 'SYS-001', action: 'SYSTEM_INITIALIZED', previous_state: null, new_state: 'OPERATIONAL', metadata_json: JSON.stringify({ version: '1.0.0', environment: 'production' }), created_at: '2026-09-29 08:00:00' },
       { id: 2, actor_user_id: 4, actor_name: 'Kimberley Taylor', actor_role: 'REPROCESSING_OPERATOR', entity_type: 'BATCH', entity_id: 'BAT-2026-0001', action: 'BATCH_CREATED', previous_state: null, new_state: 'IN_PROGRESS', metadata_json: JSON.stringify({ sterilizer: 'Autoclave Unit #1', temp: 134.0 }), created_at: '2026-09-30 06:00:00' },
@@ -450,9 +434,7 @@ class RelationalMemoryStore {
   }
 }
 
-// -------------------------------------------------------------
 // Database Connector & Query Engine
-// -------------------------------------------------------------
 class DatabaseEngine {
   public store: RelationalMemoryStore;
   private sqlite: DatabaseSync | null = null;
@@ -486,7 +468,7 @@ class DatabaseEngine {
       }
       snapshot.nextIds = JSON.parse(prior.payload);
       this.store.restore(snapshot);
-      // Earlier coursework builds gave several seeded roles the same password.
+      // Rotate matching legacy seed hashes to distinct account passwords.
       // Rotate only identical hashes; a separately changed password is retained.
       const shared = new Map<string, DbUser[]>();
       for (const user of this.store.users) {

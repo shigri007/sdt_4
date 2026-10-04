@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Responsive Navigation Sidebar
-// ==========================================================
 
 import React from 'react';
 import { useAuth } from '../context/AuthContext.js';
@@ -157,7 +154,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className="app-sidebar w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 border-r border-slate-800 select-none min-h-[calc(100vh-65px)]">
-      {/* User Context Banner in Sidebar */}
       <div className="p-4 border-b border-slate-800/80 bg-slate-950/40">
         <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Signed-in account</div>
         <div className="text-sm font-semibold text-white truncate mt-0.5">{user?.fullName}</div>
@@ -168,7 +164,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Nav Lists */}
       <div className="flex-1 py-4 px-3 space-y-6 overflow-y-auto">
         {navSections.map((sec) => {
           const visibleItems = sec.items.filter((item) => item.show && user && canAccessTab(user.role, item.id));
@@ -215,7 +210,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </div>
 
-      {/* Footer Info */}
       <div className="p-3 border-t border-slate-800/80 text-[11px] text-slate-500 flex items-center justify-between">
         <span>SteriTrack v1.0</span>
         <span className="font-mono text-[10px]">Local workspace</span>

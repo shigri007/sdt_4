@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Batch Processing Management Service
-// ==========================================================
 
 import { db, DbBatch, DbBatchKit } from '../db/index.js';
 import { AuthenticatedUser } from '../middleware/auth.js';

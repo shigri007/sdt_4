@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Full-Stack Express & Vite Server Entry Point
-// ==========================================================
 
 import 'dotenv/config';
 import express from 'express';
@@ -21,7 +18,6 @@ async function startServer() {
   app.disable('x-powered-by');
   app.use(express.json({ limit: '64kb' }));
 
-  // Basic security headers
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -65,7 +61,6 @@ async function startServer() {
 
   app.use('/api', apiRouter);
 
-  // Mount Frontend (Vite in Dev, Static in Prod)
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({

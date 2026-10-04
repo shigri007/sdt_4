@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Domain Types & Interfaces
-// ==========================================================
 
 export type RoleCode = 'ADMINISTRATOR' | 'DEPARTMENT_STAFF' | 'REPROCESSING_OPERATOR' | 'QUALITY_COORDINATOR';
 

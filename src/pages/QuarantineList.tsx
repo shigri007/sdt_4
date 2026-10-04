@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Quarantine Hold Vault & Reprocessing Management
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
@@ -62,7 +59,6 @@ export const QuarantineList: React.FC<QuarantineListProps> = ({ onSelectKitTrace
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900">
@@ -74,7 +70,6 @@ export const QuarantineList: React.FC<QuarantineListProps> = ({ onSelectKitTrace
         </div>
       </div>
 
-      {/* Safety Invariant Banner */}
       <div className="p-4 bg-rose-50 border border-rose-200/90 rounded-xl text-xs text-rose-950 flex items-start gap-3">
         <Lock className="w-5 h-5 text-rose-700 shrink-0 mt-0.5" />
         <div>
@@ -85,7 +80,6 @@ export const QuarantineList: React.FC<QuarantineListProps> = ({ onSelectKitTrace
         </div>
       </div>
 
-      {/* Quarantined Records Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
@@ -193,7 +187,6 @@ export const QuarantineList: React.FC<QuarantineListProps> = ({ onSelectKitTrace
         </div>
       </div>
 
-      {/* Reprocess Modal */}
       <ReprocessModal
         isOpen={isReprocessModalOpen}
         onClose={() => setIsReprocessModalOpen(false)}

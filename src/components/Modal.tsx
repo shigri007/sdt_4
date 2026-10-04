@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Accessible Dialog Modal Component
-// ==========================================================
 
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
@@ -44,7 +41,6 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
         onClick={onClose}
@@ -57,7 +53,6 @@ export const Modal: React.FC<ModalProps> = ({
           aria-modal="true"
           className={`relative w-full ${widthClasses} bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden transform transition-all animate-in zoom-in-95 duration-150`}
         >
-          {/* Header */}
           <div className="flex items-start justify-between p-5 border-b border-slate-100 bg-slate-50/50">
             <div>
               <h2 className="text-base font-semibold text-slate-900 tracking-tight">{title}</h2>
@@ -72,7 +67,6 @@ export const Modal: React.FC<ModalProps> = ({
             </button>
           </div>
 
-          {/* Content Body */}
           <div className="p-5">{children}</div>
         </div>
       </div>

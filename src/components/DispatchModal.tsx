@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Atomic Dispatch Modal
 // Enforces database transaction & dispatch eligibility checks
-// ==========================================================
 
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal.js';
@@ -90,7 +87,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
       maxWidth="lg"
     >
       <form onSubmit={handleDispatch} className="space-y-4">
-        {/* Requisition Context */}
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-slate-700">Required Kit Type:</span>
@@ -108,7 +104,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
           </div>
         </div>
 
-        {/* Invariant Note */}
         <div className="p-2.5 bg-teal-50 border border-teal-200/80 rounded-lg text-[11px] text-teal-900 flex items-start gap-2">
           <ShieldCheck className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
           <div>
@@ -116,7 +111,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
           </div>
         </div>
 
-        {/* Eligible Kits Selection */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1.5">
             Select {request.quantity} eligible kit{request.quantity===1?'':'s'} ({selectedKitIds.length} selected, {eligibleKits.length} available)
@@ -161,7 +155,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
           )}
         </div>
 
-        {/* Transport Case and Notes */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Transport Carrier / Case ID</label>
@@ -184,7 +177,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
           <button
             type="button"

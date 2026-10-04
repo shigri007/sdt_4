@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Main Application Component
-// ==========================================================
 
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext.js';
@@ -8,7 +5,6 @@ import { ToastProvider } from './context/ToastContext.js';
 import { Navbar } from './components/Navbar.js';
 import { Sidebar } from './components/Sidebar.js';
 
-// Pages
 import { Login } from './pages/Login.js';
 import { Dashboard } from './pages/Dashboard.js';
 import { KitsList } from './pages/KitsList.js';
@@ -100,7 +96,6 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900">
-      {/* Top Navbar */}
       <Navbar
         alerts={alerts}
         activeTab={visibleTab}
@@ -108,7 +103,6 @@ const AppContent: React.FC = () => {
       />
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Responsive Sidebar */}
         <Sidebar
           activeTab={visibleTab}
           setActiveTab={navigate}
@@ -117,7 +111,6 @@ const AppContent: React.FC = () => {
           urgentReqCount={counts.urgentReq}
         />
 
-        {/* Main Content Area */}
         <main className="app-main flex-1 overflow-y-auto">
           {visibleTab === 'dashboard' && (
             <Dashboard

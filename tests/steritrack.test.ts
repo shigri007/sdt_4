@@ -1,7 +1,4 @@
-// ==========================================================
-// SteriTrack: Automated Business Logic & Integrity Test Suite
 // Validates all 15 critical hospital safety and traceability invariants
-// ==========================================================
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { db } from '../server/src/db/index.js';
@@ -66,7 +63,6 @@ describe('SteriTrack Hospital System - Integrity Invariants', () => {
   };
 
   beforeEach(() => {
-    // Reset seed data
     db.store = new (db.store.constructor as any)();
   });
 
@@ -110,19 +106,15 @@ describe('SteriTrack Hospital System - Integrity Invariants', () => {
     const kit = db.store.kits.find(k => k.id === 8)!;
     expect(kit.current_status).toBe('RETURNED');
 
-    // 1. RETURNED -> RECEIVED
     const res1 = await WorkflowService.transitionKit(kit.id, 'RECEIVED', operatorKim);
     expect(res1.kit.current_status).toBe('RECEIVED');
 
-    // 2. RECEIVED -> CLEANING
     const res2 = await WorkflowService.transitionKit(kit.id, 'CLEANING', operatorKim);
     expect(res2.kit.current_status).toBe('CLEANING');
 
-    // 3. CLEANING -> INSPECTION
     const res3 = await WorkflowService.transitionKit(kit.id, 'INSPECTION', operatorKim);
     expect(res3.kit.current_status).toBe('INSPECTION');
 
-    // 4. INSPECTION -> PACKING
     const res4 = await WorkflowService.transitionKit(kit.id, 'PACKING', operatorKim);
     expect(res4.kit.current_status).toBe('PACKING');
   });
@@ -187,7 +179,7 @@ describe('SteriTrack Hospital System - Integrity Invariants', () => {
     expect(newAttempt.attempt_number).toBe(2);
     expect(newAttempt.result).toBe('PENDING');
 
-    // TEST 8 verification: original failed attempt is NEVER overwritten
+    // The first failed attempt must remain available after reprocessing.
     const preservedAttempt1 = db.store.processing_attempts.find(pa => pa.kit_id === kit17.id && pa.attempt_number === 1)!;
     expect(preservedAttempt1).toBeDefined();
     expect(preservedAttempt1.result).toBe('FAILED');

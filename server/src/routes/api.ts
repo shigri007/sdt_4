@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Primary API Router & Endpoints
-// ==========================================================
 
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
@@ -19,9 +16,6 @@ import { logAudit } from '../services/audit.js';
 
 const api = Router();
 
-// ==========================================================
-// 1. HEALTH CHECK
-// ==========================================================
 api.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
@@ -33,9 +27,6 @@ api.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// ==========================================================
-// 2. AUTHENTICATION
-// ==========================================================
 const loginAttempts = new Map<string,{count:number;resetAt:number}>();
 api.post('/auth/login', async (req: Request, res: Response) => {
   try {
@@ -153,9 +144,6 @@ api.use((req: AuthenticatedRequest, res: Response, next) => {
   });
 });
 
-// ==========================================================
-// 3. DASHBOARD & ALERTS
-// ==========================================================
 api.get('/dashboard', authenticate, (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = DashboardService.getMetricsForUser(req.user!);
@@ -174,9 +162,6 @@ api.get('/alerts', authenticate, (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
-// ==========================================================
-// 4. KIT REGISTRY & TRACEABILITY
-// ==========================================================
 api.get('/kits', authenticate, (req: AuthenticatedRequest, res: Response) => {
   try {
     const { status, typeId, deptId, search, page = '1', limit = '50' } = req.query;
@@ -205,7 +190,6 @@ api.get('/kits', authenticate, (req: AuthenticatedRequest, res: Response) => {
       );
     }
 
-    // Attach type and department names
     const enriched = kits.map(k => {
       const type = db.store.kit_types.find(kt => kt.id === k.kit_type_id);
       const dept = db.store.departments.find(d => d.id === k.department_owner_id);
@@ -250,7 +234,6 @@ api.get('/kits/:id', authenticate, (req: AuthenticatedRequest, res: Response) =>
   });
 });
 
-// TRACEABILITY ENDPOINT (KEY DIFFERENTIATOR)
 api.get('/kits/:id/trace', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const kit = db.store.kits.find(k => k.id === Number(req.params.id) || k.kit_code === req.params.id);
@@ -270,7 +253,6 @@ api.post('/kits', authenticate, requireRoles('QUALITY_COORDINATOR'), (req: Authe
       return res.status(400).json({ success: false, error: 'Provide a valid kit code, name, kit type and active owner department.' });
     }
 
-    // Check duplicate code
     if (db.store.kits.some(k => k.kit_code.toLowerCase() === kitCode.toLowerCase())) {
       return res.status(400).json({ success: false, error: `Kit code "${kitCode}" already exists.` });
     }
@@ -309,9 +291,6 @@ api.post('/kits', authenticate, requireRoles('QUALITY_COORDINATOR'), (req: Authe
   }
 });
 
-// ==========================================================
-// 5. WORKFLOW STATE MACHINE TRANSITIONS
-// ==========================================================
 api.get('/processing/queues', authenticate, (req: AuthenticatedRequest, res: Response) => {
   try {
     const enrich = (kits: DbKit[]) =>
@@ -373,9 +352,6 @@ api.post('/processing/:kitId/return', authenticate, async (req: AuthenticatedReq
   }
 });
 
-// ==========================================================
-// 6. BATCH MANAGEMENT
-// ==========================================================
 api.get('/batches', authenticate, (req: AuthenticatedRequest, res: Response) => {
   try {
     const batches = [...db.store.batches].sort((a, b) => b.id - a.id);
@@ -478,9 +454,6 @@ api.post('/batches/:id/fail', authenticate, requireRoles('REPROCESSING_OPERATOR'
   }
 });
 
-// ==========================================================
-// 7. QUALITY CONTROL (INDEPENDENT REVIEW)
-// ==========================================================
 api.get('/qc/pending', authenticate, requireRoles('QUALITY_COORDINATOR'), (req: AuthenticatedRequest, res: Response) => {
   try {
     const reviewedBatchIds = new Set(db.store.qc_reviews.map(q => q.batch_id));
@@ -528,9 +501,6 @@ api.post('/qc/:batchId/review', authenticate, requireRoles('QUALITY_COORDINATOR'
   }
 });
 
-// ==========================================================
-// 8. QUARANTINE & REPROCESSING
-// ==========================================================
 api.get('/quarantine', authenticate, (req: AuthenticatedRequest, res: Response) => {
   try {
     const records = db.store.quarantine_records.map(qr => {
@@ -575,9 +545,6 @@ api.post('/quarantine/:kitId/reprocess', authenticate, requireRoles('QUALITY_COO
   }
 });
 
-// ==========================================================
-// 9. REQUISITIONS & PRIORITY MANAGEMENT
-// ==========================================================
 api.get('/requests', authenticate, (req: AuthenticatedRequest, res: Response) => {
   try {
     let list = [...db.store.requests];
@@ -660,9 +627,6 @@ api.get('/requests/:id/priority-history', authenticate, (req: AuthenticatedReque
   res.json({ success: true, data: history });
 });
 
-// ==========================================================
-// 10. ATOMIC DISPATCH & RECEIPT
-// ==========================================================
 api.get('/dispatch/eligible', authenticate, requireRoles('QUALITY_COORDINATOR'), (req: AuthenticatedRequest, res: Response) => {
   try {
     const { kitTypeId } = req.query;
@@ -764,9 +728,6 @@ api.post('/receipts/confirm', authenticate, async (req: AuthenticatedRequest, re
   }
 });
 
-// ==========================================================
-// 11. INVENTORY (DERIVED METRICS)
-// ==========================================================
 api.get('/inventory/summary', authenticate, (req: AuthenticatedRequest, res: Response) => {
   try {
     const todayStr = new Date().toISOString().split('T')[0];
@@ -801,9 +762,6 @@ api.get('/inventory/summary', authenticate, (req: AuthenticatedRequest, res: Res
   }
 });
 
-// ==========================================================
-// 12. AUDIT TRAIL
-// ==========================================================
 api.get('/audit', authenticate, requireRoles('ADMINISTRATOR', 'QUALITY_COORDINATOR'), (req: AuthenticatedRequest, res: Response) => {
   try {
     const { entityType, entityId, actorId, action, search, limit = '100' } = req.query;
@@ -832,9 +790,6 @@ api.get('/audit', authenticate, requireRoles('ADMINISTRATOR', 'QUALITY_COORDINAT
   }
 });
 
-// ==========================================================
-// 13. REPORTS & CSV EXPORT
-// ==========================================================
 api.get('/reports/:reportType', authenticate, (req: AuthenticatedRequest, res: Response) => {
   try {
     const { reportType } = req.params;
@@ -920,9 +875,6 @@ api.get('/reports/:reportType', authenticate, (req: AuthenticatedRequest, res: R
   }
 });
 
-// ==========================================================
-// 14. USER & DEPARTMENT CATALOGS
-// ==========================================================
 api.get('/departments', authenticate, (req: AuthenticatedRequest, res: Response) => {
   res.json({ success: true, data: db.store.departments });
 });

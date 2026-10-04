@@ -1,6 +1,3 @@
-// ==========================================================
-// SteriTrack: Compliance & Clinical Reports with CSV Export
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
@@ -51,7 +48,6 @@ export const Reports: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
@@ -82,7 +78,6 @@ export const Reports: React.FC = () => {
         </div>
       </div>
 
-      {/* Report Selector Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto text-xs">
         <button
           onClick={() => setReportType('failed-attempts')}
@@ -129,7 +124,6 @@ export const Reports: React.FC = () => {
         </button>
       </div>
 
-      {/* Report Table View */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           {isLoading ? (

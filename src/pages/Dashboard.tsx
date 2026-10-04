@@ -1,7 +1,3 @@
-// ==========================================================
-// SteriTrack: Role-Adaptive Central Dashboard
-// Derives live data from database with zero hardcoding
-// ==========================================================
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext.js';
@@ -80,7 +76,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Top Header & Context */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900">
@@ -91,7 +86,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
           </p>
         </div>
 
-        {/* Quick Action Shortcuts */}
         <div className="flex items-center gap-2">
           {user?.role === 'DEPARTMENT_STAFF' && (
             <button
@@ -131,7 +125,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
         </div>
       </div>
 
-      {/* Live System Alerts Banner */}
       {alerts && alerts.length > 0 && (
         <div className="space-y-2">
           {alerts.map((alert: any) => (
@@ -177,7 +170,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
         </div>
       )}
 
-      {/* Primary KPI Metric Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
         <StatCard
           label="Available Kits"
@@ -223,7 +215,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
         />
       </div>
 
-      {/* Role-Specific Active Panels */}
       {user?.role === 'REPROCESSING_OPERATOR' && (
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
           <div className="flex items-center justify-between mb-4">
@@ -324,11 +315,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
         </div>
       )}
 
-      {/* Main Grid: Analytical Breakdown & Audit Trail */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Status Breakdown & Processing Stats */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Kit Status Distribution */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
             <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
               Kits by Operational State
@@ -343,7 +331,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
             </div>
           </div>
 
-          {/* Historical Processing Lethality Results */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
             <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
               Processing Attempt Ledger
@@ -372,7 +359,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
           </div>
         </div>
 
-        {/* Right Column: Live Audit Events Ledger */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
