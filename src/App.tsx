@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.js';
 import { ToastProvider } from './context/ToastContext.js';
 import { Navbar } from './components/Navbar.js';
@@ -23,12 +23,47 @@ import { UserManagement } from './pages/UserManagement.js';
 
 import { api } from './services/api.js';
 import { SystemAlert } from './types/index.js';
-import { canAccessTab } from './access.js';
+import { canAccessTab, TAB_PATHS } from './access.js';
+
+const WORKSPACE_ROUTES = [
+  { tab: 'dashboard', path: TAB_PATHS.dashboard },
+  { tab: 'kits', path: TAB_PATHS.kits },
+  { tab: 'traceability', path: `${TAB_PATHS.traceability}/:kitCode` },
+  { tab: 'processing', path: TAB_PATHS.processing },
+  { tab: 'batches', path: TAB_PATHS.batches },
+  { tab: 'qc', path: TAB_PATHS.qc },
+  { tab: 'quarantine', path: TAB_PATHS.quarantine },
+  { tab: 'inventory', path: TAB_PATHS.inventory },
+  { tab: 'requests', path: TAB_PATHS.requests },
+  { tab: 'dispatch', path: TAB_PATHS.dispatch },
+  { tab: 'receipts', path: TAB_PATHS.receipts },
+  { tab: 'audit', path: TAB_PATHS.audit },
+  { tab: 'reports', path: TAB_PATHS.reports },
+  { tab: 'admin', path: TAB_PATHS.admin },
+] as const;
+
+interface ProtectedRouteProps {
+  tab: string;
+  children: React.ReactNode;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ tab, children }) => {
+  const { user } = useAuth();
+  return user && canAccessTab(user.role, tab)
+    ? <>{children}</>
+    : <Navigate to={TAB_PATHS.dashboard} replace />;
+};
+
+const TraceabilityRoute: React.FC = () => {
+  const { kitCode = '' } = useParams<{ kitCode: string }>();
+  const navigate = useNavigate();
+  return <KitTraceability kitCode={kitCode} onBack={() => navigate(TAB_PATHS.kits)} />;
+};
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [selectedTraceKitCode, setSelectedTraceKitCode] = useState<string>('');
+  const location = useLocation();
+  const navigate = useNavigate();
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [counts, setCounts] = useState<{ pendingQc: number; quarantine: number; urgentReq: number }>({
     pendingQc: 0,
@@ -40,9 +75,11 @@ const AppContent: React.FC = () => {
     if (user) {
       loadSystemCounters();
     }
-  }, [user, activeTab]);
+  }, [user, location.pathname]);
 
-  useEffect(() => { setActiveTab('dashboard'); }, [user?.id]);
+  useEffect(() => {
+    if (user?.id) navigate(TAB_PATHS.dashboard, { replace: true });
+  }, [user?.id]);
 
   async function loadSystemCounters() {
     try {
@@ -65,17 +102,9 @@ const AppContent: React.FC = () => {
     }
   }
 
-  const navigate = (tab: string) => {
-    if (user && canAccessTab(user.role, tab)) setActiveTab(tab);
-  };
-
   const handleSelectKitTrace = (kitCode: string) => {
-    if (!user || !canAccessTab(user.role, 'traceability')) return;
-    setSelectedTraceKitCode(kitCode);
-    setActiveTab('traceability');
+    navigate(`${TAB_PATHS.traceability}/${encodeURIComponent(kitCode)}`);
   };
-
-  const visibleTab = user && canAccessTab(user.role, activeTab) ? activeTab : 'dashboard';
 
   if (isLoading) {
     return (
@@ -94,64 +123,51 @@ const AppContent: React.FC = () => {
     return <Login />;
   }
 
+  const routeElements: Record<string, React.ReactNode> = {
+    dashboard: <Dashboard onSelectKitTrace={handleSelectKitTrace} />,
+    kits: <KitsList onSelectKitTrace={handleSelectKitTrace} />,
+    traceability: <TraceabilityRoute />,
+    processing: <ProcessingWorkflow />,
+    batches: <BatchesList />,
+    qc: <QualityControl />,
+    quarantine: <QuarantineList onSelectKitTrace={handleSelectKitTrace} />,
+    inventory: <InventoryStock />,
+    requests: <RequestsList />,
+    dispatch: <DispatchManagement onSelectKitTrace={handleSelectKitTrace} />,
+    receipts: <ReceiptsList />,
+    audit: <AuditTrail />,
+    reports: <Reports />,
+    admin: <UserManagement />,
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900">
-      <Navbar
-        alerts={alerts}
-        activeTab={visibleTab}
-        setActiveTab={navigate}
-      />
+      <Navbar alerts={alerts} />
 
       <div className="flex-1 flex overflow-hidden">
         <Sidebar
-          activeTab={visibleTab}
-          setActiveTab={navigate}
           pendingQcCount={counts.pendingQc}
           quarantineCount={counts.quarantine}
           urgentReqCount={counts.urgentReq}
         />
 
         <main className="app-main flex-1 overflow-y-auto">
-          {visibleTab === 'dashboard' && (
-            <Dashboard
-              setActiveTab={navigate}
-              onSelectKitTrace={handleSelectKitTrace}
-            />
-          )}
-
-          {visibleTab === 'kits' && (
-            <KitsList onSelectKitTrace={handleSelectKitTrace} />
-          )}
-
-          {visibleTab === 'traceability' && (selectedTraceKitCode ? (
-            <KitTraceability kitCode={selectedTraceKitCode} onBack={() => navigate('kits')} />
-          ) : <KitsList onSelectKitTrace={handleSelectKitTrace} />)}
-
-          {visibleTab === 'processing' && <ProcessingWorkflow />}
-
-          {visibleTab === 'batches' && <BatchesList />}
-
-          {visibleTab === 'qc' && <QualityControl />}
-
-          {visibleTab === 'quarantine' && (
-            <QuarantineList onSelectKitTrace={handleSelectKitTrace} />
-          )}
-
-          {visibleTab === 'inventory' && <InventoryStock />}
-
-          {visibleTab === 'requests' && <RequestsList />}
-
-          {visibleTab === 'dispatch' && (
-            <DispatchManagement onSelectKitTrace={handleSelectKitTrace} />
-          )}
-
-          {visibleTab === 'receipts' && <ReceiptsList />}
-
-          {visibleTab === 'audit' && <AuditTrail />}
-
-          {visibleTab === 'reports' && <Reports />}
-
-          {visibleTab === 'admin' && user.role === 'ADMINISTRATOR' && <UserManagement />}
+          <Routes>
+            <Route path="/" element={<Navigate to={TAB_PATHS.dashboard} replace />} />
+            {WORKSPACE_ROUTES.map(({ tab, path }) => (
+              <Route
+                key={tab}
+                path={path}
+                element={(
+                  <ProtectedRoute tab={tab}>
+                    {routeElements[tab]}
+                  </ProtectedRoute>
+                )}
+              />
+            ))}
+            <Route path="/traceability" element={<Navigate to={TAB_PATHS.kits} replace />} />
+            <Route path="*" element={<Navigate to={TAB_PATHS.dashboard} replace />} />
+          </Routes>
         </main>
       </div>
     </div>

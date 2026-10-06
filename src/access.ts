@@ -8,4 +8,21 @@ export const ROLE_TABS: Record<RoleCode, readonly string[]> = {
   QUALITY_COORDINATOR: ['dashboard', 'kits', 'requests', 'batches', 'qc', 'quarantine', 'inventory', 'dispatch', 'traceability', 'audit', 'reports'],
 };
 
+export const TAB_PATHS: Record<string, string> = {
+  dashboard: '/dashboard',
+  kits: '/registry',
+  traceability: '/traceability',
+  requests: '/requests',
+  processing: '/processing',
+  batches: '/batches',
+  qc: '/quality-control',
+  quarantine: '/quarantine',
+  inventory: '/inventory',
+  dispatch: '/dispatch',
+  receipts: '/receipts',
+  audit: '/audit',
+  reports: '/reports',
+  admin: '/admin',
+};
+
 export const canAccessTab = (role: RoleCode, tab: string): boolean => ROLE_TABS[role].includes(tab);
