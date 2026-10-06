@@ -41,8 +41,11 @@ api.post('/auth/login', async (req: Request, res: Response) => {
     if (attempt && attempt.resetAt > Date.now() && attempt.count >= 5) return res.status(429).json({success:false,error:'Too many attempts. Try again later.'});
     if (attempt && attempt.resetAt <= Date.now()) loginAttempts.delete(key);
 
+    // Keep inactive accounts in the lookup so we can provide a useful
+    // access message after a correct password, without revealing account
+    // existence for unknown users or incorrect passwords.
     const user = db.store.users.find(
-      u => (u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === username.toLowerCase()) && u.is_active === 1
+      u => u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === username.toLowerCase()
     );
 
     const isMatch = user ? await bcrypt.compare(password, user.password_hash) : false;
@@ -50,6 +53,13 @@ api.post('/auth/login', async (req: Request, res: Response) => {
       const current = loginAttempts.get(key);
       loginAttempts.set(key,{count:(current?.count || 0)+1,resetAt:current?.resetAt && current.resetAt>Date.now()?current.resetAt:Date.now()+15*60*1000});
       return res.status(401).json({ success: false, error: 'Invalid username or password.' });
+    }
+    if (user.is_active !== 1) {
+      return res.status(403).json({
+        success: false,
+        error: 'This account does not currently have access. Please contact your administrator or security team for assistance.',
+        code: 'ACCOUNT_INACTIVE',
+      });
     }
     loginAttempts.delete(key);
 
