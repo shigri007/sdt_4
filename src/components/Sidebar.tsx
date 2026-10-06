@@ -1,7 +1,8 @@
 
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.js';
-import { canAccessTab } from '../access.js';
+import { canAccessTab, TAB_PATHS } from '../access.js';
 import {
   LayoutDashboard,
   PackageSearch,
@@ -20,21 +21,20 @@ import {
 } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
   pendingQcCount?: number;
   quarantineCount?: number;
   urgentReqCount?: number;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-  activeTab,
-  setActiveTab,
   pendingQcCount = 0,
   quarantineCount = 0,
   urgentReqCount = 0,
 }) => {
   const { user } = useAuth();
+  const { pathname } = useLocation();
+  const activeTab = Object.entries(TAB_PATHS).find(([, path]) => path === pathname)?.[0]
+    || (pathname.startsWith('/traceability/') ? 'traceability' : 'dashboard');
 
   const navSections = [
     {
@@ -180,12 +180,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   const isActive = activeTab === item.id;
 
                   return (
-                    <button
+                    <Link
                       key={item.id}
+                      to={item.id === 'traceability' ? TAB_PATHS.kits : TAB_PATHS[item.id]}
                       aria-label={item.label}
                       aria-current={isActive ? 'page' : undefined}
                       title={item.label}
-                      onClick={() => setActiveTab(item.id)}
                       className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg transition-all ${
                         isActive
                           ? 'bg-slate-800 text-white shadow-xs font-semibold'
@@ -201,7 +201,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           {item.badge}
                         </span>
                       )}
-                    </button>
+                    </Link>
                   );
                 })}
               </div>
