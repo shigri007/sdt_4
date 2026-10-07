@@ -1,6 +1,7 @@
 // Enforces mandatory segregation of duties check
 
 import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from './Modal.js';
 import { Batch } from '../types/index.js';
 import { useAuth } from '../context/AuthContext.js';
@@ -23,13 +24,26 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
 }) => {
   const { user } = useAuth();
   const { success, error } = useToast();
+  const queryClient = useQueryClient();
 
   const [decision, setDecision] = useState<'APPROVED' | 'REJECTED'>('APPROVED');
   const [bioResult, setBioResult] = useState('');
   const [chemResult, setChemResult] = useState('');
   const [packagingIntact, setPackagingIntact] = useState(false);
   const [notes, setNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const reviewMutation = useMutation({
+    mutationFn: (reviewData: any) => api.submitQcReview(batch!.id, reviewData),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['pending-qc'] }),
+        queryClient.invalidateQueries({ queryKey: ['batches'] }),
+        queryClient.invalidateQueries({ queryKey: ['quarantine'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['alerts'] }),
+      ]);
+    },
+  });
+  const isSubmitting = reviewMutation.isPending;
 
   if (!batch) return null;
 
@@ -49,8 +63,7 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
 
     if (notes.trim().length < 5) { error('Review note required','Record the evidence and reason for this decision.'); return; }
     try {
-      setIsSubmitting(true);
-      await api.submitQcReview(batch.id, {
+      await reviewMutation.mutateAsync({
         decision,
         biologicalTestResult: bioResult,
         chemicalIndicatorResult: chemResult,
@@ -68,8 +81,6 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
       onClose();
     } catch (err: any) {
       error('QC Signoff Failed', err.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

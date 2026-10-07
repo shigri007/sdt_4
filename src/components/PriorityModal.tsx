@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from './Modal.js';
 import { KitRequest, PriorityCode } from '../types/index.js';
 import { api } from '../services/api.js';
@@ -20,9 +21,18 @@ export const PriorityModal: React.FC<PriorityModalProps> = ({
   onUpdated,
 }) => {
   const { success, error } = useToast();
+  const queryClient = useQueryClient();
   const [priority, setPriority] = useState<PriorityCode>('URGENT');
   const [justification, setJustification] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const priorityMutation = useMutation({
+    mutationFn: ({ requestId, nextPriority, reason }: { requestId: number; nextPriority: PriorityCode; reason: string }) => api.updateRequestPriority(requestId, nextPriority, reason),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['requests'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['alerts'] }),
+    ]),
+  });
+  const isSubmitting = priorityMutation.isPending;
 
   if (!request) return null;
 
@@ -34,16 +44,13 @@ export const PriorityModal: React.FC<PriorityModalProps> = ({
     }
 
     try {
-      setIsSubmitting(true);
-      await api.updateRequestPriority(request.id, priority, justification.trim());
+      await priorityMutation.mutateAsync({ requestId: request.id, nextPriority: priority, reason: justification.trim() });
       success('Priority Updated', `Requisition ${request.request_code} priority changed to ${priority}.`);
       setJustification('');
       onUpdated();
       onClose();
     } catch (err: any) {
       error('Failed to change priority', err.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

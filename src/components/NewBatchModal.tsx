@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal } from './Modal.js';
 import { Kit } from '../types/index.js';
 import { api } from '../services/api.js';
@@ -19,7 +20,6 @@ export const NewBatchModal: React.FC<NewBatchModalProps> = ({
 }) => {
   const { success, error } = useToast();
 
-  const [packedKits, setPackedKits] = useState<Kit[]>([]);
   const [selectedKitIds, setSelectedKitIds] = useState<number[]>([]);
   const [sterilizerUnit, setSterilizerUnit] = useState('Autoclave Unit #1 (Steris AMSCO)');
   const [processingMethod, setProcessingMethod] = useState<'STEAM_AUTOCLAVE' | 'ETHYLENE_OXIDE' | 'VAPORIZED_HYDROGEN_PEROXIDE' | 'DRY_HEAT'>('STEAM_AUTOCLAVE');
@@ -27,29 +27,27 @@ export const NewBatchModal: React.FC<NewBatchModalProps> = ({
   const [pressurePsi, setPressurePsi] = useState(30.5);
   const [durationMins, setDurationMins] = useState(18);
   const [notes, setNotes] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const queryClient = useQueryClient();
+  const packedKitsQuery = useQuery({
+    queryKey: ['kits', 'PACKING'],
+    queryFn: async () => (await api.getKits({ status: 'PACKING' })).data,
+    enabled: isOpen,
+  });
+  const packedKits: Kit[] = packedKitsQuery.data ?? [];
+  const isLoading = packedKitsQuery.isLoading;
+  const createBatchMutation = useMutation({
+    mutationFn: (payload: any) => api.createBatch(payload),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['batches'] }),
+      queryClient.invalidateQueries({ queryKey: ['processing-queues'] }),
+      queryClient.invalidateQueries({ queryKey: ['kits'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+    ]),
+  });
+  const isSubmitting = createBatchMutation.isPending;
   useEffect(() => {
-    if (isOpen) {
-      loadPackedKits();
-    }
-  }, [isOpen]);
-
-  async function loadPackedKits() {
-    try {
-      setIsLoading(true);
-      const res = await api.getKits({ status: 'PACKING' });
-      if (res.success) {
-        setPackedKits(res.data);
-        setSelectedKitIds(res.data.map((k) => k.id));
-      }
-    } catch (err: any) {
-      error('Failed to load packed kits', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+    if (isOpen && packedKitsQuery.data) setSelectedKitIds(packedKitsQuery.data.map((kit) => kit.id));
+  }, [isOpen, packedKitsQuery.data]);
 
   const toggleKitSelection = (id: number) => {
     setSelectedKitIds((prev) =>
@@ -73,8 +71,7 @@ export const NewBatchModal: React.FC<NewBatchModalProps> = ({
     }
 
     try {
-      setIsSubmitting(true);
-      const res = await api.createBatch({
+      const res = await createBatchMutation.mutateAsync({
         sterilizerUnitId: sterilizerUnit,
         processingMethod,
         targetTemperatureC: tempC,
@@ -89,8 +86,6 @@ export const NewBatchModal: React.FC<NewBatchModalProps> = ({
       onClose();
     } catch (err: any) {
       error('Batch Creation Failed', err.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

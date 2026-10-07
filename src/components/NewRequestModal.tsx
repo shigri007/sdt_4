@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal } from './Modal.js';
 import { KitType, Department, PriorityCode } from '../types/index.js';
 import { api } from '../services/api.js';
@@ -21,43 +22,28 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
   const { user } = useAuth();
   const { success, error } = useToast();
 
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [kitTypes, setKitTypes] = useState<KitType[]>([]);
   const [selectedDeptId, setSelectedDeptId] = useState<number>(user?.departmentId || 1);
   const [selectedKitTypeId, setSelectedKitTypeId] = useState<number>(1);
   const [quantity, setQuantity] = useState<number>(1);
   const [priority, setPriority] = useState<PriorityCode>('ROUTINE');
   const [reason, setReason] = useState('');
   const [requiredDate, setRequiredDate] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      loadCatalogs();
-    }
-  }, [isOpen]);
-
-  async function loadCatalogs() {
-    try {
-      const [deptRes, kitTypeRes] = await Promise.all([api.getDepartments(), api.getKitTypes()]);
-      if (deptRes.success) {
-        setDepartments(deptRes.data);
-        if (user?.departmentId) {
-          setSelectedDeptId(user.departmentId);
-        } else if (deptRes.data.length > 0) {
-          setSelectedDeptId(deptRes.data[0].id);
-        }
-      }
-      if (kitTypeRes.success) {
-        setKitTypes(kitTypeRes.data);
-        if (kitTypeRes.data.length > 0) {
-          setSelectedKitTypeId(kitTypeRes.data[0].id);
-        }
-      }
-    } catch (err: any) {
-      error('Failed to load catalogs', err.message);
-    }
-  }
+  const queryClient = useQueryClient();
+  const departmentsQuery = useQuery({ queryKey: ['departments'], queryFn: async () => (await api.getDepartments()).data, enabled: isOpen });
+  const kitTypesQuery = useQuery({ queryKey: ['kit-types'], queryFn: async () => (await api.getKitTypes()).data, enabled: isOpen });
+  const departments = (departmentsQuery.data ?? []) as Department[];
+  const kitTypes = (kitTypesQuery.data ?? []) as KitType[];
+  const createMutation = useMutation({
+    mutationFn: (payload: { departmentId: number; kitTypeId: number; quantity: number; priority: PriorityCode; clinicalReason: string; requiredByDate?: string }) => api.createRequest(payload),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['requests'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['alerts'] }),
+      ]);
+    },
+  });
+  const isSubmitting = createMutation.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,8 +53,7 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
     }
 
     try {
-      setIsSubmitting(true);
-      await api.createRequest({
+      await createMutation.mutateAsync({
         departmentId: selectedDeptId,
         kitTypeId: selectedKitTypeId,
         quantity,
@@ -83,8 +68,6 @@ export const NewRequestModal: React.FC<NewRequestModalProps> = ({
       onClose();
     } catch (err: any) {
       error('Requisition Failed', err.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
