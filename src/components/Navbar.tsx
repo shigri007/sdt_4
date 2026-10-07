@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { Link, useLocation } from 'react-router-dom';
 import { Bell, Boxes, ChevronRight, KeyRound, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
 import { SystemAlert } from '../types/index.js';
 import { useToast } from '../context/ToastContext.js';
 import { api } from '../services/api.js';
 import { Modal } from './Modal.js';
+import { TAB_PATHS } from '../access.js';
 
 interface NavbarProps {
   alerts: SystemAlert[];
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
 }
 
 const names: Record<string,string> = {
@@ -18,19 +19,35 @@ const names: Record<string,string> = {
   receipts:'Receipts',traceability:'Traceability',audit:'Audit trail',reports:'Reports',admin:'Admin panel'
 };
 
-export const Navbar: React.FC<NavbarProps> = ({ alerts, activeTab, setActiveTab }) => {
+export const Navbar: React.FC<NavbarProps> = ({ alerts }) => {
   const {user, logout} = useAuth();
+  const { pathname } = useLocation();
+  const activeTab = Object.entries(TAB_PATHS).find(([, path]) => path === pathname)?.[0]
+    || (pathname.startsWith('/traceability/') ? 'traceability' : 'dashboard');
   const {error,success} = useToast();
   const [open, setOpen] = useState(false);
   const [accountOpen,setAccountOpen] = useState(false);
   const [passwords,setPasswords] = useState({current:'',next:''});
-  const changePassword = async (event:React.FormEvent) => {event.preventDefault();try {await api.changePassword(passwords.current,passwords.next);setPasswords({current:'',next:''});setAccountOpen(false);success('Password changed','Sign in with your new password.');logout();} catch(cause:any){error('Could not change password',cause.message);} };
+  const changePasswordMutation = useMutation({
+    mutationFn: ({ current, next }: { current: string; next: string }) => api.changePassword(current, next),
+    onSuccess: () => {
+      setPasswords({current:'',next:''});
+      setAccountOpen(false);
+      success('Password changed','Sign in with your new password.');
+      logout();
+    },
+  });
+  const changePassword = async (event:React.FormEvent) => {
+    event.preventDefault();
+    try { await changePasswordMutation.mutateAsync(passwords); }
+    catch(cause:any) { error('Could not change password',cause.message); }
+  };
   return <><header className="app-topbar sticky top-0 z-30 flex items-center justify-between gap-4 px-5 sm:px-8 py-3.5 bg-white border-b border-slate-200/80">
     <div className="flex min-w-0 items-center gap-4">
-      <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-2.5 shrink-0" aria-label="Go to overview">
+      <Link to={TAB_PATHS.dashboard} className="flex items-center gap-2.5 shrink-0" aria-label="Go to overview">
         <span className="brand-mark flex items-center justify-center"><Boxes className="h-4 w-4" strokeWidth={2.2}/></span>
         <span className="font-bold tracking-tight text-slate-900 hidden sm:inline">SteriTrack</span>
-      </button>
+      </Link>
       <span className="h-5 w-px bg-slate-200 hidden sm:block"/>
       <div className="flex min-w-0 items-center gap-2 text-xs sm:text-sm"><span className="text-slate-400 hidden md:block">Workspace</span><ChevronRight className="h-3.5 w-3.5 text-slate-300 hidden md:block"/><span className="font-semibold text-slate-800 truncate">{names[activeTab] || 'Workspace'}</span></div>
     </div>

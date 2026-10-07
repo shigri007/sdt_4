@@ -1,6 +1,7 @@
 // Department staff verifies delivery and returns used kits
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { DispatchRecord, Kit } from '../types/index.js';
 import { useAuth } from '../context/AuthContext.js';
@@ -20,8 +21,6 @@ export const ReceiptsList: React.FC = () => {
   const { user } = useAuth();
   const { success, error } = useToast();
 
-  const [dispatches, setDispatches] = useState<DispatchRecord[]>([]);
-  const [deptKits, setDeptKits] = useState<Kit[]>([]);
   const [selectedDispatchForReceipt, setSelectedDispatchForReceipt] = useState<DispatchRecord | null>(null);
   const [selectedKitToReturn, setSelectedKitToReturn] = useState<Kit | null>(null);
 
@@ -29,44 +28,42 @@ export const ReceiptsList: React.FC = () => {
   const [indicatorVerified, setIndicatorVerified] = useState(true);
   const [conditionNotes, setConditionNotes] = useState('Sterile barrier wrap intact; Class 5 integrator verified dark brown.');
   const [returnNotes, setReturnNotes] = useState('Procedure completed; kit returned contaminated.');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadData();
-  }, [user]);
-
-  async function loadData() {
-    try {
-      setIsLoading(true);
-      const [dispRes, kitsRes] = await Promise.all([
-        api.getDispatchHistory(),
-        api.getKits({ status: 'RECEIVED_BY_DEPT' }),
+  const queryClient = useQueryClient();
+  const receiptsQuery = useQuery({
+    queryKey: ['receipts-data', user?.id],
+    queryFn: async () => {
+      const [dispatchRes, kitsRes] = await Promise.all([
+        api.getDispatchHistory(), api.getKits({ status: 'RECEIVED_BY_DEPT' }),
       ]);
-
-      if (dispRes.success) setDispatches(dispRes.data);
-      if (kitsRes.success) {
-        // If department staff, filter to their assigned department
-        if (user?.role === 'DEPARTMENT_STAFF' && user.departmentId) {
-          setDeptKits(kitsRes.data.filter((k) => k.department_owner_id === user.departmentId));
-        } else {
-          setDeptKits(kitsRes.data);
-        }
-      }
-    } catch (err: any) {
-      error('Failed to load receipts', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+      const kits = user?.role === 'DEPARTMENT_STAFF' && user.departmentId
+        ? kitsRes.data.filter((kit) => kit.department_owner_id === user.departmentId)
+        : kitsRes.data;
+      return { dispatches: dispatchRes.data, kits };
+    },
+    enabled: Boolean(user),
+  });
+  const dispatches: DispatchRecord[] = receiptsQuery.data?.dispatches ?? [];
+  const deptKits: Kit[] = receiptsQuery.data?.kits ?? [];
+  const isLoading = receiptsQuery.isLoading;
+  const invalidateReceiptData = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['receipts-data'] }),
+    queryClient.invalidateQueries({ queryKey: ['dispatch-history'] }),
+    queryClient.invalidateQueries({ queryKey: ['kits'] }),
+    queryClient.invalidateQueries({ queryKey: ['processing-queues'] }),
+    queryClient.invalidateQueries({ queryKey: ['inventory-summary'] }),
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+    queryClient.invalidateQueries({ queryKey: ['alerts'] }),
+  ]);
+  const receiptMutation = useMutation({ mutationFn: (payload: { dispatchId: number; packagingIntact: boolean; indicatorColorVerified: boolean; conditionNotes?: string }) => api.confirmReceipt(payload), onSuccess: invalidateReceiptData });
+  const returnMutation = useMutation({ mutationFn: ({ kitId, notes }: { kitId: number; notes: string }) => api.returnKit(kitId, notes), onSuccess: invalidateReceiptData });
+  const isSubmitting = receiptMutation.isPending || returnMutation.isPending;
 
   const handleConfirmReceipt = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDispatchForReceipt) return;
 
     try {
-      setIsSubmitting(true);
-      await api.confirmReceipt({
+      await receiptMutation.mutateAsync({
         dispatchId: selectedDispatchForReceipt.id,
         packagingIntact,
         indicatorColorVerified: indicatorVerified,
@@ -78,11 +75,8 @@ export const ReceiptsList: React.FC = () => {
         `Kit ${selectedDispatchForReceipt.kitCode} received and verified for clinical use.`
       );
       setSelectedDispatchForReceipt(null);
-      loadData();
     } catch (err: any) {
       error('Receipt Failed', err.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -91,18 +85,14 @@ export const ReceiptsList: React.FC = () => {
     if (!selectedKitToReturn) return;
 
     try {
-      setIsSubmitting(true);
-      await api.returnKit(selectedKitToReturn.id, returnNotes.trim());
+      await returnMutation.mutateAsync({ kitId: selectedKitToReturn.id, notes: returnNotes.trim() });
       success(
         'Kit Returned',
         `Kit ${selectedKitToReturn.kit_code} marked as contaminated. Dispatched to CSPD decontamination receiving dock.`
       );
       setSelectedKitToReturn(null);
-      loadData();
     } catch (err: any) {
       error('Return Failed', err.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

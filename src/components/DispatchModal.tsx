@@ -1,6 +1,7 @@
 // Enforces database transaction & dispatch eligibility checks
 
 import React, { useState, useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal } from './Modal.js';
 import { KitRequest, Kit } from '../types/index.js';
 import { api } from '../services/api.js';
@@ -22,34 +23,31 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
   onDispatched,
 }) => {
   const { success, error } = useToast();
-  const [eligibleKits, setEligibleKits] = useState<Kit[]>([]);
   const [selectedKitIds, setSelectedKitIds] = useState<number[]>([]);
   const [transportCaseId, setTransportCaseId] = useState('');
   const [notes, setNotes] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (isOpen && request) {
-      loadEligible();
-    }
-  }, [isOpen, request]);
-
-  async function loadEligible() {
-    if (!request) return;
-    try {
-      setIsLoading(true);
-      const res = await api.getEligibleKits(request.kit_type_id);
-      if (res.success) {
-        setEligibleKits(res.data);
-        setSelectedKitIds([]);
-      }
-    } catch (err: any) {
-      error('Failed to load eligible stock', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const queryClient = useQueryClient();
+  const eligibleQuery = useQuery({
+    queryKey: ['eligible-kits', request?.kit_type_id],
+    queryFn: async () => (await api.getEligibleKits(request!.kit_type_id)).data,
+    enabled: isOpen && Boolean(request),
+  });
+  const eligibleKits: Kit[] = eligibleQuery.data ?? [];
+  const isLoading = eligibleQuery.isLoading;
+  useEffect(() => { setSelectedKitIds([]); }, [request?.id, isOpen]);
+  const dispatchMutation = useMutation({
+    mutationFn: (payload: { requestId: number; kitIds: number[]; transportCaseId?: string; notes?: string }) => api.dispatchKit(payload),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['requests'] }),
+      queryClient.invalidateQueries({ queryKey: ['dispatch-history'] }),
+      queryClient.invalidateQueries({ queryKey: ['eligible-kits'] }),
+      queryClient.invalidateQueries({ queryKey: ['kits'] }),
+      queryClient.invalidateQueries({ queryKey: ['inventory-summary'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['alerts'] }),
+    ]),
+  });
+  const isSubmitting = dispatchMutation.isPending;
 
   if (!request) return null;
 
@@ -61,8 +59,7 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
     }
 
     try {
-      setIsSubmitting(true);
-      await api.dispatchKit({
+      await dispatchMutation.mutateAsync({
         requestId: request.id,
         kitIds: selectedKitIds,
         transportCaseId,
@@ -73,8 +70,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
       onClose();
     } catch (err: any) {
       error('Dispatch Failed', err.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

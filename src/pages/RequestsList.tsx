@@ -1,9 +1,9 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { KitRequest } from '../types/index.js';
 import { useAuth } from '../context/AuthContext.js';
-import { useToast } from '../context/ToastContext.js';
 import { PriorityBadge } from '../components/StatusBadge.js';
 import { PriorityModal } from '../components/PriorityModal.js';
 import { DispatchModal } from '../components/DispatchModal.js';
@@ -22,12 +22,8 @@ import {
 
 export const RequestsList: React.FC = () => {
   const { user, hasRole } = useAuth();
-  const { error } = useToast();
-
-  const [requests, setRequests] = useState<KitRequest[]>([]);
   const [priorityFilter, setPriorityFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
 
   const [selectedReqForPriority, setSelectedReqForPriority] = useState<KitRequest | null>(null);
   const [selectedReqForDispatch, setSelectedReqForDispatch] = useState<KitRequest | null>(null);
@@ -35,41 +31,27 @@ export const RequestsList: React.FC = () => {
 
   // Priority History Modal
   const [historyReq, setHistoryReq] = useState<KitRequest | null>(null);
-  const [priorityHistory, setPriorityHistory] = useState<any[]>([]);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const requestsQuery = useQuery({
+    queryKey: ['requests', user?.id],
+    queryFn: async () => (await api.getRequests()).data,
+    enabled: Boolean(user),
+  });
+  const requests: KitRequest[] = (requestsQuery.data ?? []).filter((r: KitRequest) =>
+    (!priorityFilter || r.priority === priorityFilter) && (!statusFilter || r.status === statusFilter),
+  );
+  const isLoading = requestsQuery.isLoading;
+  const loadRequests = () => requestsQuery.refetch();
+  const historyQuery = useQuery({
+    queryKey: ['request-priority-history', historyReq?.id],
+    queryFn: async () => (await api.getRequestPriorityHistory(historyReq!.id)).data,
+    enabled: Boolean(historyReq && isHistoryModalOpen),
+  });
+  const priorityHistory = historyQuery.data ?? [];
 
-  useEffect(() => {
-    loadRequests();
-  }, [user, priorityFilter, statusFilter]);
-
-  async function loadRequests() {
-    try {
-      setIsLoading(true);
-      const res = await api.getRequests();
-      if (res.success) {
-        let filtered = res.data;
-        if (priorityFilter) filtered = filtered.filter((r) => r.priority === priorityFilter);
-        if (statusFilter) filtered = filtered.filter((r) => r.status === statusFilter);
-        setRequests(filtered);
-      }
-    } catch (err: any) {
-      error('Failed to load requisitions', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  const handleOpenHistory = async (req: KitRequest) => {
+  const handleOpenHistory = (req: KitRequest) => {
     setHistoryReq(req);
-    try {
-      const res = await api.getRequestPriorityHistory(req.id);
-      if (res.success) {
-        setPriorityHistory(res.data);
-        setIsHistoryModalOpen(true);
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    setIsHistoryModalOpen(true);
   };
 
   return (

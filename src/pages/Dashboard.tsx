@@ -1,5 +1,8 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { TAB_PATHS } from '../access.js';
 import { useAuth } from '../context/AuthContext.js';
 import { api } from '../services/api.js';
 import { StatCard } from '../components/StatCard.js';
@@ -19,32 +22,20 @@ import {
 } from 'lucide-react';
 
 interface DashboardProps {
-  setActiveTab: (tab: string) => void;
   onSelectKitTrace?: (kitCode: string) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitTrace }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onSelectKitTrace }) => {
+  const navigate = useNavigate();
+  const goToTab = (tab: string) => navigate(TAB_PATHS[tab] || TAB_PATHS.dashboard);
   const { user } = useAuth();
-  const [data, setData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadDashboard();
-  }, [user]);
-
-  async function loadDashboard() {
-    try {
-      setIsLoading(true);
-      const res = await api.getDashboard();
-      if (res.success) {
-        setData(res.data);
-      }
-    } catch (err) {
-      console.error('Failed to load dashboard:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const dashboardQuery = useQuery({
+    queryKey: ['dashboard', user?.id],
+    queryFn: async () => (await api.getDashboard()).data,
+    enabled: Boolean(user),
+  });
+  const data = dashboardQuery.data;
+  const isLoading = dashboardQuery.isLoading;
 
   if (isLoading || !data) {
     return (
@@ -70,7 +61,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
     return <div className="mx-auto max-w-7xl space-y-7 p-6">
       <div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">SteriTrack workspace</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{roleView.title}</h1><p className="mt-2 text-sm text-slate-500">{roleView.description}</p></div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{roleView.cards.map(([label,value]) => <div key={label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"><span className="text-sm text-slate-500">{label}</span><p className="mt-3 text-3xl font-bold text-slate-900">{value}</p></div>)}</div>
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-lg font-semibold text-slate-900">Your tasks</h2><div className="mt-4 grid gap-3 md:grid-cols-3">{roleView.actions.map(([label,tab]) => <button key={tab} onClick={() => setActiveTab(String(tab))} className="group flex items-center justify-between rounded-xl border border-teal-100 bg-teal-50 px-4 py-4 text-left text-sm font-semibold text-teal-900 transition hover:-translate-y-0.5 hover:bg-teal-100 hover:shadow-sm">{label}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></button>)}</div></div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-lg font-semibold text-slate-900">Your tasks</h2><div className="mt-4 grid gap-3 md:grid-cols-3">{roleView.actions.map(([label,tab]) => <button key={tab} onClick={() => goToTab(String(tab))} className="group flex items-center justify-between rounded-xl border border-teal-100 bg-teal-50 px-4 py-4 text-left text-sm font-semibold text-teal-900 transition hover:-translate-y-0.5 hover:bg-teal-100 hover:shadow-sm">{label}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></button>)}</div></div>
     </div>;
   }
 
@@ -89,7 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
         <div className="flex items-center gap-2">
           {user?.role === 'DEPARTMENT_STAFF' && (
             <button
-              onClick={() => setActiveTab('requests')}
+              onClick={() => goToTab('requests')}
               className="px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-xs transition-colors"
             >
               + Create Kit Requisition
@@ -98,7 +89,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
 
           {user?.role === 'REPROCESSING_OPERATOR' && (
             <button
-              onClick={() => setActiveTab('processing')}
+              onClick={() => goToTab('processing')}
               className="px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-xs transition-colors"
             >
               Open Decon Stations
@@ -107,7 +98,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
 
           {user?.role === 'QUALITY_COORDINATOR' && (
             <button
-              onClick={() => setActiveTab('qc')}
+              onClick={() => goToTab('qc')}
               className="px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-xs transition-colors"
             >
               Review Batches ({overview.batchesAwaitingQc})
@@ -115,7 +106,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
           )}
 
           <button
-            onClick={() => setActiveTab('kits')}
+            onClick={() => goToTab('kits')}
             className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
             title="Browse kit histories"
           >
@@ -156,10 +147,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
 
               <button
                 onClick={() => {
-                  if (alert.type === 'URGENT_REQUEST') setActiveTab('requests');
-                  else if (alert.type === 'QC_REQUIRED') setActiveTab('qc');
-                  else if (alert.type === 'QUARANTINE_ATTENTION') setActiveTab('quarantine');
-                  else setActiveTab('inventory');
+                  if (alert.type === 'URGENT_REQUEST') goToTab('requests');
+                  else if (alert.type === 'QC_REQUIRED') goToTab('qc');
+                  else if (alert.type === 'QUARANTINE_ATTENTION') goToTab('quarantine');
+                  else goToTab('inventory');
                 }}
                 className="text-xs font-semibold underline hover:no-underline ml-4 whitespace-nowrap"
               >
@@ -223,7 +214,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
               <p className="text-xs text-slate-500">Live active queues across cleaning and packaging workflow</p>
             </div>
             <button
-              onClick={() => setActiveTab('processing')}
+              onClick={() => goToTab('processing')}
               className="text-xs font-semibold text-teal-600 hover:text-teal-700 flex items-center gap-1"
             >
               Open Workflow Board <ArrowRight className="w-3.5 h-3.5" />
@@ -279,7 +270,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
               <p className="text-xs text-slate-500">Live requisition and kit transit telemetry for your unit</p>
             </div>
             <button
-              onClick={() => setActiveTab('requests')}
+              onClick={() => goToTab('requests')}
               className="text-xs font-semibold text-teal-600 hover:text-teal-700 flex items-center gap-1"
             >
               View All Requests <ArrowRight className="w-3.5 h-3.5" />
@@ -370,7 +361,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onSelectKitT
                 <p className="text-xs text-slate-500">Recent kit transitions and recorded user actions</p>
               </div>
               <button
-                onClick={() => setActiveTab('audit')}
+                onClick={() => goToTab('audit')}
                 className="text-xs font-semibold text-teal-600 hover:text-teal-700 flex items-center gap-1"
               >
                 Full Audit Trail <ArrowRight className="w-3.5 h-3.5" />

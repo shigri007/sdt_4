@@ -1,9 +1,9 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { DispatchRecord, KitRequest } from '../types/index.js';
 import { useAuth } from '../context/AuthContext.js';
-import { useToast } from '../context/ToastContext.js';
 import { DispatchModal } from '../components/DispatchModal.js';
 import {
   Truck,
@@ -22,35 +22,20 @@ interface DispatchManagementProps {
 
 export const DispatchManagement: React.FC<DispatchManagementProps> = ({ onSelectKitTrace }) => {
   const { user } = useAuth();
-  const { error } = useToast();
-
-  const [dispatches, setDispatches] = useState<DispatchRecord[]>([]);
-  const [pendingRequests, setPendingRequests] = useState<KitRequest[]>([]);
   const [selectedReqForDispatch, setSelectedReqForDispatch] = useState<KitRequest | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
-    try {
-      setIsLoading(true);
-      const [dispRes, reqRes] = await Promise.all([
-        api.getDispatchHistory(),
-        api.getRequests(),
-      ]);
-
-      if (dispRes.success) setDispatches(dispRes.data);
-      if (reqRes.success) {
-        setPendingRequests(reqRes.data.filter((r) => r.status === 'PENDING'));
-      }
-    } catch (err: any) {
-      error('Failed to load dispatch records', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const dispatchQuery = useQuery({
+    queryKey: ['dispatch-history'],
+    queryFn: async () => (await api.getDispatchHistory()).data,
+  });
+  const requestsQuery = useQuery({
+    queryKey: ['requests', user?.id],
+    queryFn: async () => (await api.getRequests()).data,
+    enabled: Boolean(user),
+  });
+  const dispatches: DispatchRecord[] = dispatchQuery.data ?? [];
+  const pendingRequests: KitRequest[] = (requestsQuery.data ?? []).filter((r: KitRequest) => r.status === 'PENDING');
+  const isLoading = dispatchQuery.isLoading || requestsQuery.isLoading;
+  const loadData = () => Promise.all([dispatchQuery.refetch(), requestsQuery.refetch()]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">

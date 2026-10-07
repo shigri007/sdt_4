@@ -1,6 +1,7 @@
 // Spawns Attempt #N while preserving immutable failed attempts
 
 import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from './Modal.js';
 import { Kit } from '../types/index.js';
 import { api } from '../services/api.js';
@@ -21,10 +22,21 @@ export const ReprocessModal: React.FC<ReprocessModalProps> = ({
   onReprocessStarted,
 }) => {
   const { success, error } = useToast();
+  const queryClient = useQueryClient();
   const [justification, setJustification] = useState(
     'Released from Quarantine for complete re-cleaning, ultrasonic wash, and re-sterilization.'
   );
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const reprocessMutation = useMutation({
+    mutationFn: ({ kitId, reason }: { kitId: number; reason: string }) => api.startReprocessing(kitId, reason),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['quarantine'] }),
+      queryClient.invalidateQueries({ queryKey: ['processing-queues'] }),
+      queryClient.invalidateQueries({ queryKey: ['kits'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['alerts'] }),
+    ]),
+  });
+  const isSubmitting = reprocessMutation.isPending;
 
   if (!kit) return null;
 
@@ -39,8 +51,7 @@ export const ReprocessModal: React.FC<ReprocessModalProps> = ({
     }
 
     try {
-      setIsSubmitting(true);
-      await api.startReprocessing(kit.id, justification.trim());
+      await reprocessMutation.mutateAsync({ kitId: kit.id, reason: justification.trim() });
       success(
         'Reprocessing Cycle Initiated',
         `Attempt #${nextAttempt} created for Kit ${kit.kit_code}. Moved to Decontamination Receiving Dock.`
@@ -49,8 +60,6 @@ export const ReprocessModal: React.FC<ReprocessModalProps> = ({
       onClose();
     } catch (err: any) {
       error('Authorization Failed', err.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

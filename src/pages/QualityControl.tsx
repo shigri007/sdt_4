@@ -1,6 +1,7 @@
 // Enforces mandatory segregation of duties check
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { Batch } from '../types/index.js';
 import { useAuth } from '../context/AuthContext.js';
@@ -20,28 +21,16 @@ export const QualityControl: React.FC = () => {
   const { user } = useAuth();
   const { error } = useToast();
 
-  const [pendingBatches, setPendingBatches] = useState<Batch[]>([]);
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadPending();
-  }, [user]);
-
-  async function loadPending() {
-    try {
-      setIsLoading(true);
-      const res = await api.getPendingQcBatches();
-      if (res.success) {
-        setPendingBatches(res.data);
-      }
-    } catch (err: any) {
-      error('Failed to load pending QC queue', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const pendingQuery = useQuery({
+    queryKey: ['pending-qc', user?.id],
+    queryFn: async () => (await api.getPendingQcBatches()).data,
+    enabled: Boolean(user),
+  });
+  const pendingBatches = pendingQuery.data ?? [];
+  const isLoading = pendingQuery.isLoading;
+  const loadPending = () => pendingQuery.refetch();
 
   const handleOpenReview = (batch: Batch) => {
     setSelectedBatch(batch);

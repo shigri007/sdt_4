@@ -1,5 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { Kit, KitType, Department } from '../types/index.js';
 import { StatusBadge } from '../components/StatusBadge.js';
@@ -26,12 +27,8 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
   const { hasRole } = useAuth();
   const { success, error } = useToast();
 
-  const [kits, setKits] = useState<Kit[]>([]);
-  const [kitTypes, setKitTypes] = useState<KitType[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
   const [search, setSearch] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
 
@@ -46,48 +43,48 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
   const [newTypeId, setNewTypeId] = useState(1);
   const [newDeptId, setNewDeptId] = useState(1);
   const [newNotes, setNewNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    loadData();
-  }, [statusFilter, typeFilter]);
-
-  async function loadData() {
-    try {
-      setIsLoading(true);
+  const queryClient = useQueryClient();
+  const registryQuery = useQuery({
+    queryKey: ['kits', statusFilter, typeFilter, submittedSearch],
+    queryFn: async () => {
       const params: Record<string, string> = {};
       if (statusFilter) params.status = statusFilter;
       if (typeFilter) params.typeId = typeFilter;
-      if (search) params.search = search;
-
+      if (submittedSearch) params.search = submittedSearch;
       const [kitsRes, typesRes, deptsRes] = await Promise.all([
-        api.getKits(params),
-        api.getKitTypes(),
-        api.getDepartments(),
+        api.getKits(params), api.getKitTypes(), api.getDepartments(),
       ]);
-
-      if (kitsRes.success) setKits(kitsRes.data);
-      if (typesRes.success) setKitTypes(typesRes.data);
-      if (deptsRes.success) setDepartments(deptsRes.data);
-    } catch (err: any) {
-      error('Failed to load kits', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+      return { kits: kitsRes.data, kitTypes: typesRes.data, departments: deptsRes.data };
+    },
+  });
+  const kits: Kit[] = registryQuery.data?.kits ?? [];
+  const kitTypes: KitType[] = registryQuery.data?.kitTypes ?? [];
+  const departments: Department[] = registryQuery.data?.departments ?? [];
+  const isLoading = registryQuery.isLoading;
+  const loadData = () => registryQuery.refetch();
+  const createKitMutation = useMutation({
+    mutationFn: (kitData: any) => api.createKit(kitData),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['kits'] }),
+      queryClient.invalidateQueries({ queryKey: ['inventory-summary'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+    ]),
+  });
+  const isSubmitting = createKitMutation.isPending;
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loadData();
+    setSubmittedSearch(search);
   };
 
   const handleOpenQr = async (kit: Kit) => {
     setSelectedKitForQr(kit);
     try {
-      const traceRes = await api.getKitTrace(kit.kit_code);
-      if (traceRes.success) {
-        setQrCodeUrl(traceRes.data.qrCodeDataUrl);
-      }
+      const trace = await queryClient.fetchQuery({
+        queryKey: ['kit-trace', kit.kit_code],
+        queryFn: async () => (await api.getKitTrace(kit.kit_code)).data,
+      });
+      setQrCodeUrl(trace.qrCodeDataUrl);
       setIsQrModalOpen(true);
     } catch (err) {
       console.error(err);
@@ -97,8 +94,7 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
   const handleCreateKit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setIsSubmitting(true);
-      await api.createKit({
+      await createKitMutation.mutateAsync({
         kitCode: newCode.trim(),
         kitName: newName.trim(),
         kitTypeId: newTypeId,
@@ -111,11 +107,8 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
       setNewCode('');
       setNewName('');
       setNewNotes('');
-      loadData();
     } catch (err: any) {
       error('Registration Failed', err.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

@@ -1,31 +1,18 @@
 // Zero arbitrary duplicated counts; strictly derived from kit records
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { StatCard } from '../components/StatCard.js';
 import { Boxes, CheckCircle2, ShieldAlert, Layers, Truck, AlertTriangle } from 'lucide-react';
 
 export const InventoryStock: React.FC = () => {
-  const [summary, setSummary] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadInventory();
-  }, []);
-
-  async function loadInventory() {
-    try {
-      setIsLoading(true);
-      const res = await api.getInventorySummary();
-      if (res.success) {
-        setSummary(res.data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const inventoryQuery = useQuery({
+    queryKey: ['inventory-summary'],
+    queryFn: async () => (await api.getInventorySummary()).data,
+  });
+  const summary = inventoryQuery.data ?? [];
+  const isLoading = inventoryQuery.isLoading;
 
   const totalStock = summary.reduce((acc, curr) => acc + curr.totalStock, 0);
   const totalAvailable = summary.reduce((acc, curr) => acc + curr.available, 0);
