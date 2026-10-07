@@ -1,5 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { Batch } from '../types/index.js';
 import { useAuth } from '../context/AuthContext.js';
@@ -22,8 +23,6 @@ export const BatchesList: React.FC = () => {
   const { user, hasRole } = useAuth();
   const { success, error } = useToast();
 
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isNewBatchOpen, setIsNewBatchOpen] = useState(false);
 
   // Batch Detail Modal
@@ -39,31 +38,40 @@ export const BatchesList: React.FC = () => {
   const [batchToFail, setBatchToFail] = useState<Batch | null>(null);
   const [failReason, setFailReason] = useState('Chamber temperature fell below 134°C during sterilization exposure.');
 
-  useEffect(() => {
-    loadBatches();
-  }, []);
-
-  async function loadBatches() {
-    try {
-      setIsLoading(true);
-      const res = await api.getBatches();
-      if (res.success) {
-        setBatches(res.data);
-      }
-    } catch (err: any) {
-      error('Failed to load batches', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const queryClient = useQueryClient();
+  const batchesQuery = useQuery({ queryKey: ['batches'], queryFn: async () => (await api.getBatches()).data });
+  const batches = batchesQuery.data ?? [];
+  const isLoading = batchesQuery.isLoading;
+  const loadBatches = () => batchesQuery.refetch();
+  const completeMutation = useMutation({
+    mutationFn: ({ id, options }: { id: number; options: { physicalPassed?: boolean; chemicalPassed?: boolean; notes?: string } }) => api.completeBatch(id, options),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['batches'] }),
+      queryClient.invalidateQueries({ queryKey: ['processing-queues'] }),
+      queryClient.invalidateQueries({ queryKey: ['pending-qc'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['alerts'] }),
+    ]),
+  });
+  const failMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: number; reason: string }) => api.failBatch(id, reason),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['batches'] }),
+      queryClient.invalidateQueries({ queryKey: ['processing-queues'] }),
+      queryClient.invalidateQueries({ queryKey: ['quarantine'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['alerts'] }),
+    ]),
+  });
 
   const handleOpenDetail = async (batchId: number) => {
     try {
-      const res = await api.getBatchById(batchId);
-      if (res.success) {
-        setSelectedBatch(res.data);
-        setIsDetailOpen(true);
-      }
+      const detail = await queryClient.fetchQuery({
+        queryKey: ['batch-detail', batchId],
+        queryFn: async () => (await api.getBatchById(batchId)).data,
+      });
+      setSelectedBatch(detail);
+      setIsDetailOpen(true);
     } catch (err: any) {
       error('Failed to load batch details', err.message);
     }
@@ -74,14 +82,13 @@ export const BatchesList: React.FC = () => {
     if (!batchToComplete) return;
 
     try {
-      await api.completeBatch(batchToComplete.id, {
+      await completeMutation.mutateAsync({ id: batchToComplete.id, options: {
         physicalPassed,
         chemicalPassed,
         notes: completeNotes.trim() || undefined,
-      });
+      } });
       success('Cycle Completed', `Batch ${batchToComplete.batch_code} completed. Kits transitioned to Awaiting QC.`);
       setBatchToComplete(null);
-      loadBatches();
     } catch (err: any) {
       error('Failed to complete batch', err.message);
     }
@@ -96,10 +103,9 @@ export const BatchesList: React.FC = () => {
     }
 
     try {
-      await api.failBatch(batchToFail.id, failReason.trim());
+      await failMutation.mutateAsync({ id: batchToFail.id, reason: failReason.trim() });
       success('Batch Marked as Failed', `Batch ${batchToFail.batch_code} failed. All kits immediately quarantined.`);
       setBatchToFail(null);
-      loadBatches();
     } catch (err: any) {
       error('Failed to fail batch', err.message);
     }

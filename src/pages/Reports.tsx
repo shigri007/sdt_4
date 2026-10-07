@@ -1,30 +1,17 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { FileText, Download, Printer, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export const Reports: React.FC = () => {
   const [reportType, setReportType] = useState('failed-attempts');
-  const [reportData, setReportData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadReport();
-  }, [reportType]);
-
-  async function loadReport() {
-    try {
-      setIsLoading(true);
-      const res = await api.getReport(reportType);
-      if (res.success) {
-        setReportData(res.data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const reportQuery = useQuery({
+    queryKey: ['report', reportType],
+    queryFn: async () => (await api.getReport(reportType)).data,
+  });
+  const reportData = reportQuery.data ?? [];
+  const isLoading = reportQuery.isLoading;
 
   const exportCsv = () => {
     if (reportData.length === 0) return;

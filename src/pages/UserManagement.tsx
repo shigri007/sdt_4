@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { User, Department } from '../types/index.js';
 import { useToast } from '../context/ToastContext.js';
@@ -9,41 +10,39 @@ import { useAuth } from '../context/AuthContext.js';
 export const UserManagement: React.FC = () => {
   const { user } = useAuth();
   const { success, error } = useToast();
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [departments,setDepartments] = useState<Department[]>([]);
   const [creating,setCreating] = useState(false);
-  const [saving,setSaving] = useState(false);
   const [form,setForm] = useState({username:'',email:'',fullName:'',role:'DEPARTMENT_STAFF',departmentId:1,password:''});
+  const queryClient = useQueryClient();
+  const usersQuery = useQuery({ queryKey: ['users'], queryFn: async () => (await api.getUsers()).data, enabled: user?.role === 'ADMINISTRATOR' });
+  const departmentsQuery = useQuery({ queryKey: ['departments'], queryFn: async () => (await api.getDepartments()).data, enabled: user?.role === 'ADMINISTRATOR' });
+  const users: User[] = usersQuery.data ?? [];
+  const departments: Department[] = departmentsQuery.data ?? [];
+  const isLoading = usersQuery.isLoading;
+  const createUserMutation = useMutation({
+    mutationFn: (data: typeof form) => api.createUser(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
+  });
+  const toggleActiveMutation = useMutation({
+    mutationFn: (id: number) => api.toggleUserActive(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
+  });
+  const saving = createUserMutation.isPending;
 
   useEffect(() => {
-    loadUsers();
-    api.getDepartments().then(res => {setDepartments(res.data);if(res.data[0])setForm(previous=>({...previous,departmentId:res.data[0].id}));}).catch(()=>{});
-  }, []);
+    if (departments[0]) setForm(previous => ({ ...previous, departmentId: departments[0].id }));
+  }, [departments]);
 
   const createUser = async (event:React.FormEvent) => {
-    event.preventDefault();setSaving(true);
-    try {await api.createUser(form);success('Account created',`${form.username} can now sign in.`);setCreating(false);setForm(previous=>({...previous,username:'',email:'',fullName:'',password:''}));loadUsers();}
-    catch(cause:any){error('Could not create account',cause.message);}finally{setSaving(false);}
+    event.preventDefault();
+    try {await createUserMutation.mutateAsync(form);success('Account created',`${form.username} can now sign in.`);setCreating(false);setForm(previous=>({...previous,username:'',email:'',fullName:'',password:''}));}
+    catch(cause:any){error('Could not create account',cause.message);}
   };
 
-  async function loadUsers() {
-    try {
-      setIsLoading(true);
-      const res = await api.getUsers();
-      if (res.success) {
-        setUsers(res.data);
-      }
-    } catch (err: any) {
-      error('Failed to load users', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const loadUsers = () => usersQuery.refetch();
 
   const handleToggleActive = async (user: User) => {
     try {
-      const res = await api.toggleUserActive(user.id);
+      const res = await toggleActiveMutation.mutateAsync(user.id);
       if (res.success) {
         success(
           'User Status Updated',

@@ -1,6 +1,7 @@
 // Core Differentiating Feature: Complete Immutable Audit Timeline
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { KitTraceabilityData, ProcessingAttempt, TimelineEvent } from '../types/index.js';
 import { StatusBadge } from '../components/StatusBadge.js';
@@ -30,29 +31,15 @@ interface KitTraceabilityProps {
 }
 
 export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBack }) => {
-  const [data, setData] = useState<KitTraceabilityData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState('');
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
-
-  useEffect(() => {
-    loadTraceability();
-  }, [kitCode]);
-
-  async function loadTraceability() {
-    try {
-      setIsLoading(true);
-      setErrorMsg('');
-      const res = await api.getKitTrace(kitCode);
-      if (res.success) {
-        setData(res.data);
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to load kit traceability records.');
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const traceQuery = useQuery<KitTraceabilityData>({
+    queryKey: ['kit-trace', kitCode],
+    queryFn: async () => (await api.getKitTrace(kitCode)).data,
+    enabled: Boolean(kitCode),
+  });
+  const data = traceQuery.data;
+  const isLoading = traceQuery.isLoading;
+  const errorMsg = traceQuery.error instanceof Error ? traceQuery.error.message : '';
 
   if (isLoading) {
     return (

@@ -1,5 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { TAB_PATHS } from '../access.js';
 import { useAuth } from '../context/AuthContext.js';
@@ -28,26 +29,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectKitTrace }) => {
   const navigate = useNavigate();
   const goToTab = (tab: string) => navigate(TAB_PATHS[tab] || TAB_PATHS.dashboard);
   const { user } = useAuth();
-  const [data, setData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadDashboard();
-  }, [user]);
-
-  async function loadDashboard() {
-    try {
-      setIsLoading(true);
-      const res = await api.getDashboard();
-      if (res.success) {
-        setData(res.data);
-      }
-    } catch (err) {
-      console.error('Failed to load dashboard:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const dashboardQuery = useQuery({
+    queryKey: ['dashboard', user?.id],
+    queryFn: async () => (await api.getDashboard()).data,
+    enabled: Boolean(user),
+  });
+  const data = dashboardQuery.data;
+  const isLoading = dashboardQuery.isLoading;
 
   if (isLoading || !data) {
     return (

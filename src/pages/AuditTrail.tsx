@@ -1,6 +1,7 @@
 // Searchable application event history
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { AuditEvent } from '../types/index.js';
 import {
@@ -15,37 +16,25 @@ import {
 } from 'lucide-react';
 
 export const AuditTrail: React.FC = () => {
-  const [logs, setLogs] = useState<AuditEvent[]>([]);
   const [search, setSearch] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState('');
   const [entityFilter, setEntityFilter] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<AuditEvent | null>(null);
-
-  useEffect(() => {
-    loadLogs();
-  }, [entityFilter]);
-
-  async function loadLogs() {
-    try {
-      setIsLoading(true);
+  const auditQuery = useQuery({
+    queryKey: ['audit-logs', entityFilter, submittedSearch],
+    queryFn: async () => {
       const params: Record<string, string> = {};
       if (entityFilter) params.entityType = entityFilter;
-      if (search) params.search = search;
-
-      const res = await api.getAuditLogs(params);
-      if (res.success) {
-        setLogs(res.data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+      if (submittedSearch) params.search = submittedSearch;
+      return (await api.getAuditLogs(params)).data;
+    },
+  });
+  const logs = auditQuery.data ?? [];
+  const isLoading = auditQuery.isLoading;
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loadLogs();
+    setSubmittedSearch(search);
   };
 
   return (
@@ -93,8 +82,8 @@ export const AuditTrail: React.FC = () => {
           <button
             onClick={() => {
               setSearch('');
+              setSubmittedSearch('');
               setEntityFilter('');
-              loadLogs();
             }}
             className="p-2 text-slate-400 hover:text-slate-600 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
             title="Reset Filters"

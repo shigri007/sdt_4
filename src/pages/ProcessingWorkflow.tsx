@@ -1,6 +1,7 @@
 // Server-side validated state transitions across all stages
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { Kit } from '../types/index.js';
 import { useAuth } from '../context/AuthContext.js';
@@ -23,55 +24,33 @@ export const ProcessingWorkflow: React.FC = () => {
   const { user, hasRole } = useAuth();
   const { success, error } = useToast();
 
-  const [queues, setQueues] = useState<{
-    returned: Kit[];
-    received: Kit[];
-    cleaning: Kit[];
-    inspection: Kit[];
-    packing: Kit[];
-    awaitingQc: Kit[];
-  }>({
-    returned: [],
-    received: [],
-    cleaning: [],
-    inspection: [],
-    packing: [],
-    awaitingQc: [],
-  });
-
-  const [isLoading, setIsLoading] = useState(true);
   const [isNewBatchOpen, setIsNewBatchOpen] = useState(false);
   const [activeProcessingId, setActiveProcessingId] = useState<number | null>(null);
-
-  useEffect(() => {
-    loadQueues();
-  }, []);
-
-  async function loadQueues() {
-    try {
-      setIsLoading(true);
-      const res = await api.getProcessingQueues();
-      if (res.success) {
-        setQueues(res.data);
-      }
-    } catch (err: any) {
-      error('Failed to load processing stations', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const queryClient = useQueryClient();
+  const queuesQuery = useQuery({ queryKey: ['processing-queues'], queryFn: async () => (await api.getProcessingQueues()).data });
+  const queues: { returned: Kit[]; received: Kit[]; cleaning: Kit[]; inspection: Kit[]; packing: Kit[]; awaitingQc: Kit[] } = queuesQuery.data ?? {
+    returned: [], received: [], cleaning: [], inspection: [], packing: [], awaitingQc: [],
+  };
+  const isLoading = queuesQuery.isLoading;
+  const loadQueues = () => queuesQuery.refetch();
+  const transitionMutation = useMutation({
+    mutationFn: ({ kitId, targetStatus, notes }: { kitId: number; targetStatus: string; notes?: string }) => api.transitionKit(kitId, targetStatus, { notes }),
+    onSuccess: async (res) => {
+      success('Workflow Advanced', res.message);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['processing-queues'] }),
+        queryClient.invalidateQueries({ queryKey: ['kits'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['inventory-summary'] }),
+      ]);
+    },
+    onError: (cause: any) => error('Transition Rejected', cause.message),
+    onSettled: () => setActiveProcessingId(null),
+  });
 
   const handleTransition = async (kitId: number, targetStatus: string, notes?: string) => {
-    try {
-      setActiveProcessingId(kitId);
-      const res = await api.transitionKit(kitId, targetStatus, { notes });
-      success('Workflow Advanced', res.message);
-      loadQueues();
-    } catch (err: any) {
-      error('Transition Rejected', err.message);
-    } finally {
-      setActiveProcessingId(null);
-    }
+    setActiveProcessingId(kitId);
+    await transitionMutation.mutateAsync({ kitId, targetStatus, notes }).catch(() => undefined);
   };
 
   return (

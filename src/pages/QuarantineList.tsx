@@ -1,5 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api.js';
 import { QuarantineRecord, Kit } from '../types/index.js';
 import { useAuth } from '../context/AuthContext.js';
@@ -21,37 +22,23 @@ interface QuarantineListProps {
 export const QuarantineList: React.FC<QuarantineListProps> = ({ onSelectKitTrace }) => {
   const { hasRole } = useAuth();
   const { error } = useToast();
+  const queryClient = useQueryClient();
 
-  const [records, setRecords] = useState<QuarantineRecord[]>([]);
   const [selectedKitForReprocess, setSelectedKitForReprocess] = useState<Kit | null>(null);
   const [isReprocessModalOpen, setIsReprocessModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadQuarantine();
-  }, []);
-
-  async function loadQuarantine() {
-    try {
-      setIsLoading(true);
-      const res = await api.getQuarantineRecords();
-      if (res.success) {
-        setRecords(res.data);
-      }
-    } catch (err: any) {
-      error('Failed to load quarantine records', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const quarantineQuery = useQuery({ queryKey: ['quarantine'], queryFn: async () => (await api.getQuarantineRecords()).data });
+  const records: QuarantineRecord[] = quarantineQuery.data ?? [];
+  const isLoading = quarantineQuery.isLoading;
+  const loadQuarantine = () => quarantineQuery.refetch();
 
   const handleStartReprocessing = async (record: QuarantineRecord) => {
     try {
-      const kitRes = await api.getKitById(record.kit_id);
-      if (kitRes.success) {
-        setSelectedKitForReprocess(kitRes.data);
-        setIsReprocessModalOpen(true);
-      }
+      const kit = await queryClient.fetchQuery({
+        queryKey: ['kit', record.kit_id],
+        queryFn: async () => (await api.getKitById(record.kit_id)).data,
+      });
+      setSelectedKitForReprocess(kit);
+      setIsReprocessModalOpen(true);
     } catch (err: any) {
       error('Failed to load kit data', err.message);
     }
