@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router-dom';
 import { Bell, Boxes, ChevronRight, KeyRound, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
@@ -27,7 +28,20 @@ export const Navbar: React.FC<NavbarProps> = ({ alerts }) => {
   const [open, setOpen] = useState(false);
   const [accountOpen,setAccountOpen] = useState(false);
   const [passwords,setPasswords] = useState({current:'',next:''});
-  const changePassword = async (event:React.FormEvent) => {event.preventDefault();try {await api.changePassword(passwords.current,passwords.next);setPasswords({current:'',next:''});setAccountOpen(false);success('Password changed','Sign in with your new password.');logout();} catch(cause:any){error('Could not change password',cause.message);} };
+  const changePasswordMutation = useMutation({
+    mutationFn: ({ current, next }: { current: string; next: string }) => api.changePassword(current, next),
+    onSuccess: () => {
+      setPasswords({current:'',next:''});
+      setAccountOpen(false);
+      success('Password changed','Sign in with your new password.');
+      logout();
+    },
+  });
+  const changePassword = async (event:React.FormEvent) => {
+    event.preventDefault();
+    try { await changePasswordMutation.mutateAsync(passwords); }
+    catch(cause:any) { error('Could not change password',cause.message); }
+  };
   return <><header className="app-topbar sticky top-0 z-30 flex items-center justify-between gap-4 px-5 sm:px-8 py-3.5 bg-white border-b border-slate-200/80">
     <div className="flex min-w-0 items-center gap-4">
       <Link to={TAB_PATHS.dashboard} className="flex items-center gap-2.5 shrink-0" aria-label="Go to overview">

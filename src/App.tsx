@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import React from 'react';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.js';
 import { ToastProvider } from './context/ToastContext.js';
 import { Navbar } from './components/Navbar.js';
@@ -22,8 +23,9 @@ import { Reports } from './pages/Reports.js';
 import { UserManagement } from './pages/UserManagement.js';
 
 import { api } from './services/api.js';
-import { SystemAlert } from './types/index.js';
 import { canAccessTab, TAB_PATHS } from './access.js';
+
+const queryClient = new QueryClient();
 
 const WORKSPACE_ROUTES = [
   { tab: 'dashboard', path: TAB_PATHS.dashboard },
@@ -62,45 +64,21 @@ const TraceabilityRoute: React.FC = () => {
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
-  const [alerts, setAlerts] = useState<SystemAlert[]>([]);
-  const [counts, setCounts] = useState<{ pendingQc: number; quarantine: number; urgentReq: number }>({
-    pendingQc: 0,
-    quarantine: 0,
-    urgentReq: 0,
-  });
-
-  useEffect(() => {
-    if (user) {
-      loadSystemCounters();
-    }
-  }, [user, location.pathname]);
-
-  useEffect(() => {
+  React.useEffect(() => {
     if (user?.id) navigate(TAB_PATHS.dashboard, { replace: true });
   }, [user?.id]);
 
-  async function loadSystemCounters() {
-    try {
-      const [alertsRes, qcRes, quarRes, reqRes] = await Promise.all([
-        api.getAlerts().catch(() => ({ success: false, data: [] })),
-        api.getPendingQcBatches().catch(() => ({ success: false, data: [] })),
-        api.getQuarantineRecords().catch(() => ({ success: false, data: [] })),
-        api.getRequests().catch(() => ({ success: false, data: [] })),
-      ]);
-
-      if (alertsRes.success) setAlerts(alertsRes.data);
-
-      const pendingQc = qcRes.success ? qcRes.data.length : 0;
-      const quarantine = quarRes.success ? quarRes.data.filter((q: any) => q.status === 'ACTIVE_QUARANTINE').length : 0;
-      const urgentReq = reqRes.success ? reqRes.data.filter((r: any) => r.status === 'PENDING' && r.priority === 'URGENT').length : 0;
-
-      setCounts({ pendingQc, quarantine, urgentReq });
-    } catch (err) {
-      console.error(err);
-    }
-  }
+  const alertsQuery = useQuery({ queryKey: ['alerts'], queryFn: async () => (await api.getAlerts()).data, enabled: Boolean(user) });
+  const qcQuery = useQuery({ queryKey: ['pending-qc'], queryFn: async () => (await api.getPendingQcBatches()).data, enabled: Boolean(user) });
+  const quarantineQuery = useQuery({ queryKey: ['quarantine'], queryFn: async () => (await api.getQuarantineRecords()).data, enabled: Boolean(user) });
+  const requestsQuery = useQuery({ queryKey: ['requests'], queryFn: async () => (await api.getRequests()).data, enabled: Boolean(user) });
+  const alerts = alertsQuery.data ?? [];
+  const counts = {
+    pendingQc: qcQuery.data?.length ?? 0,
+    quarantine: quarantineQuery.data?.filter((q: any) => q.status === 'ACTIVE_QUARANTINE').length ?? 0,
+    urgentReq: requestsQuery.data?.filter((r: any) => r.status === 'PENDING' && r.priority === 'URGENT').length ?? 0,
+  };
 
   const handleSelectKitTrace = (kitCode: string) => {
     navigate(`${TAB_PATHS.traceability}/${encodeURIComponent(kitCode)}`);
@@ -176,10 +154,12 @@ const AppContent: React.FC = () => {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </ToastProvider>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ToastProvider>
+    </QueryClientProvider>
   );
 }
