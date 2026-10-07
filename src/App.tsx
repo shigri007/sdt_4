@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.js';
@@ -6,21 +6,22 @@ import { ToastProvider } from './context/ToastContext.js';
 import { Navbar } from './components/Navbar.js';
 import { Sidebar } from './components/Sidebar.js';
 
-import { Login } from './pages/Login.js';
-import { Dashboard } from './pages/Dashboard.js';
-import { KitsList } from './pages/KitsList.js';
-import { KitTraceability } from './pages/KitTraceability.js';
-import { ProcessingWorkflow } from './pages/ProcessingWorkflow.js';
-import { BatchesList } from './pages/BatchesList.js';
-import { QualityControl } from './pages/QualityControl.js';
-import { QuarantineList } from './pages/QuarantineList.js';
-import { InventoryStock } from './pages/InventoryStock.js';
-import { RequestsList } from './pages/RequestsList.js';
-import { DispatchManagement } from './pages/DispatchManagement.js';
-import { ReceiptsList } from './pages/ReceiptsList.js';
-import { AuditTrail } from './pages/AuditTrail.js';
-import { Reports } from './pages/Reports.js';
-import { UserManagement } from './pages/UserManagement.js';
+
+const Login = lazy(() => import('./pages/Login.js').then(({ Login }) => ({ default: Login })));
+const Dashboard = lazy(() => import('./pages/Dashboard.js').then(({ Dashboard }) => ({ default: Dashboard })));
+const KitsList = lazy(() => import('./pages/KitsList.js').then(({ KitsList }) => ({ default: KitsList })));
+const KitTraceability = lazy(() => import('./pages/KitTraceability.js').then(({ KitTraceability }) => ({ default: KitTraceability })));
+const ProcessingWorkflow = lazy(() => import('./pages/ProcessingWorkflow.js').then(({ ProcessingWorkflow }) => ({ default: ProcessingWorkflow })));
+const BatchesList = lazy(() => import('./pages/BatchesList.js').then(({ BatchesList }) => ({ default: BatchesList })));
+const QualityControl = lazy(() => import('./pages/QualityControl.js').then(({ QualityControl }) => ({ default: QualityControl })));
+const QuarantineList = lazy(() => import('./pages/QuarantineList.js').then(({ QuarantineList }) => ({ default: QuarantineList })));
+const InventoryStock = lazy(() => import('./pages/InventoryStock.js').then(({ InventoryStock }) => ({ default: InventoryStock })));
+const RequestsList = lazy(() => import('./pages/RequestsList.js').then(({ RequestsList }) => ({ default: RequestsList })));
+const DispatchManagement = lazy(() => import('./pages/DispatchManagement.js').then(({ DispatchManagement }) => ({ default: DispatchManagement })));
+const ReceiptsList = lazy(() => import('./pages/ReceiptsList.js').then(({ ReceiptsList }) => ({ default: ReceiptsList })));
+const AuditTrail = lazy(() => import('./pages/AuditTrail.js').then(({ AuditTrail }) => ({ default: AuditTrail })));
+const Reports = lazy(() => import('./pages/Reports.js').then(({ Reports }) => ({ default: Reports })));
+const UserManagement = lazy(() => import('./pages/UserManagement.js').then(({ UserManagement }) => ({ default: UserManagement })));
 
 import { api } from './services/api.js';
 import { canAccessTab, TAB_PATHS } from './access.js';
@@ -98,7 +99,7 @@ const AppContent: React.FC = () => {
   }
 
   if (!user) {
-    return <Login />;
+    return <Suspense fallback={null}><Login /></Suspense>;
   }
 
   const routeElements: Record<string, React.ReactNode> = {
@@ -130,22 +131,24 @@ const AppContent: React.FC = () => {
         />
 
         <main className="app-main flex-1 overflow-y-auto">
-          <Routes>
-            <Route path="/" element={<Navigate to={TAB_PATHS.dashboard} replace />} />
-            {WORKSPACE_ROUTES.map(({ tab, path }) => (
-              <Route
-                key={tab}
-                path={path}
-                element={(
-                  <ProtectedRoute tab={tab}>
-                    {routeElements[tab]}
-                  </ProtectedRoute>
-                )}
-              />
-            ))}
-            <Route path="/traceability" element={<Navigate to={TAB_PATHS.kits} replace />} />
-            <Route path="*" element={<Navigate to={TAB_PATHS.dashboard} replace />} />
-          </Routes>
+          <Suspense fallback={null}>
+            <Routes>
+              <Route path="/" element={<Navigate to={TAB_PATHS.dashboard} replace />} />
+              {WORKSPACE_ROUTES.map(({ tab, path }) => (
+                <Route
+                  key={tab}
+                  path={path}
+                  element={(
+                    <ProtectedRoute tab={tab}>
+                      {routeElements[tab]}
+                    </ProtectedRoute>
+                  )}
+                />
+              ))}
+              <Route path="/traceability" element={<Navigate to={TAB_PATHS.kits} replace />} />
+              <Route path="*" element={<Navigate to={TAB_PATHS.dashboard} replace />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
     </div>
