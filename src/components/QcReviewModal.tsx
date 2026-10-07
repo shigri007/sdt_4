@@ -1,12 +1,15 @@
 // Enforces mandatory segregation of duties check
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { Modal } from './Modal.js';
 import { Batch } from '../types/index.js';
 import { useAuth } from '../context/AuthContext.js';
 import { useToast } from '../context/ToastContext.js';
 import { api } from '../services/api.js';
+import { qcReviewSchema, QcReviewFormValues } from '../schemas/qcReviewSchema.js';
 import { ShieldAlert, ShieldCheck, CheckCircle2, XCircle } from 'lucide-react';
 
 interface QcReviewModalProps {
@@ -26,11 +29,23 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
   const { success, error } = useToast();
   const queryClient = useQueryClient();
 
-  const [decision, setDecision] = useState<'APPROVED' | 'REJECTED'>('APPROVED');
-  const [bioResult, setBioResult] = useState('');
-  const [chemResult, setChemResult] = useState('');
-  const [packagingIntact, setPackagingIntact] = useState(false);
-  const [notes, setNotes] = useState('');
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    setValue,
+    watch,
+    formState: { errors: validationErrors },
+  } = useForm<QcReviewFormValues>({
+    resolver: zodResolver(qcReviewSchema),
+    defaultValues: {
+      decision: 'APPROVED',
+      biologicalTestResult: '',
+      chemicalIndicatorResult: '',
+      packagingIntegrityVerified: false,
+      notes: '',
+    },
+  });
+  const decision = watch('decision');
   const reviewMutation = useMutation({
     mutationFn: (reviewData: any) => api.submitQcReview(batch!.id, reviewData),
     onSuccess: async () => {
@@ -50,9 +65,7 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
   // Invariant check: Is current user the operator of this batch?
   const isOperatorSelfReview = user && batch.operator_id === user.id;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async (values: QcReviewFormValues) => {
     if (isOperatorSelfReview) {
       error(
         'Compliance Violation',
@@ -61,15 +74,8 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
       return;
     }
 
-    if (notes.trim().length < 5) { error('Review note required','Record the evidence and reason for this decision.'); return; }
     try {
-      await reviewMutation.mutateAsync({
-        decision,
-        biologicalTestResult: bioResult,
-        chemicalIndicatorResult: chemResult,
-        packagingIntegrityVerified: packagingIntact,
-        notes: notes.trim() || undefined,
-      });
+      await reviewMutation.mutateAsync(values);
 
       if (decision === 'APPROVED') {
         success('Batch QC Approved', `Batch ${batch.batch_code} approved. All contained kits are now AVAILABLE in sterile inventory.`);
@@ -92,7 +98,7 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
       subtitle={`Batch: ${batch.batch_code} · ${batch.sterilizer_unit_id}`}
       maxWidth="lg"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleFormSubmit(handleSubmit)} className="space-y-4">
         {isOperatorSelfReview ? (
           <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-900 flex items-start gap-3">
             <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
@@ -143,7 +149,7 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
               type="button"
               disabled={Boolean(isOperatorSelfReview)}
               onClick={() => {
-                setDecision('APPROVED');
+                setValue('decision', 'APPROVED', { shouldDirty: true, shouldValidate: true });
               }}
               className={`p-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition-all ${
                 decision === 'APPROVED'
@@ -158,7 +164,7 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
               type="button"
               disabled={Boolean(isOperatorSelfReview)}
               onClick={() => {
-                setDecision('REJECTED');
+                setValue('decision', 'REJECTED', { shouldDirty: true, shouldValidate: true });
               }}
               className={`p-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition-all ${
                 decision === 'REJECTED'
@@ -179,10 +185,10 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
             </label>
             <select
               disabled={Boolean(isOperatorSelfReview)}
-              value={bioResult}
-              onChange={(e) => setBioResult(e.target.value)}
+              {...register('biologicalTestResult')}
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
             ><option value="">Select observed result</option><option value="NEGATIVE">Negative</option><option value="POSITIVE">Positive</option><option value="INDETERMINATE">Indeterminate</option></select>
+            {validationErrors.biologicalTestResult && <p className="text-[11px] text-rose-600 mt-1">{validationErrors.biologicalTestResult.message}</p>}
           </div>
 
           <div>
@@ -191,18 +197,17 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
             </label>
             <select
               disabled={Boolean(isOperatorSelfReview)}
-              value={chemResult}
-              onChange={(e) => setChemResult(e.target.value)}
+              {...register('chemicalIndicatorResult')}
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
             ><option value="">Select observed result</option><option value="PASS">Pass</option><option value="FAIL">Fail</option><option value="INDETERMINATE">Indeterminate</option></select>
+            {validationErrors.chemicalIndicatorResult && <p className="text-[11px] text-rose-600 mt-1">{validationErrors.chemicalIndicatorResult.message}</p>}
           </div>
 
           <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
             <input
               type="checkbox"
               disabled={Boolean(isOperatorSelfReview)}
-              checked={packagingIntact}
-              onChange={(e) => setPackagingIntact(e.target.checked)}
+              {...register('packagingIntegrityVerified')}
               className="rounded text-teal-600 focus:ring-teal-500 w-4 h-4"
             />
             <span>Visual inspection confirms barrier wrap is dry, intact, and seal tape unbroken (no wet pack).</span>
@@ -214,10 +219,10 @@ export const QcReviewModal: React.FC<QcReviewModalProps> = ({
               rows={2}
               disabled={Boolean(isOperatorSelfReview)}
               placeholder="Record review observations, sterilizer printer slip verification..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              {...register('notes')}
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
+            {validationErrors.notes && <p className="text-[11px] text-rose-600 mt-1">{validationErrors.notes.message}</p>}
           </div>
         </div>
 
