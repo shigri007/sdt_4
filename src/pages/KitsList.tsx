@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api.js';
+import { kitQrDataUrl } from '../services/kitQr.js';
 import { Kit, KitType, Department } from '../types/index.js';
 import { StatusBadge } from '../components/StatusBadge.js';
 import { QRModal } from '../components/QRModal.js';
@@ -80,11 +81,8 @@ export const KitsList: React.FC<KitsListProps> = ({ onSelectKitTrace }) => {
   const handleOpenQr = async (kit: Kit) => {
     setSelectedKitForQr(kit);
     try {
-      const trace = await queryClient.fetchQuery({
-        queryKey: ['kit-trace', kit.kit_code],
-        queryFn: async () => (await api.getKitTrace(kit.kit_code)).data,
-      });
-      setQrCodeUrl(trace.qrCodeDataUrl);
+      // The QR holds the full trace link for this site, so scanning opens the kit's trace page.
+      setQrCodeUrl(await kitQrDataUrl(kit.kit_code));
       setIsQrModalOpen(true);
     } catch (err) {
       console.error(err);

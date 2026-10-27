@@ -1,5 +1,6 @@
 
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -39,7 +40,9 @@ export const Modal: React.FC<ModalProps> = ({
     '2xl': 'max-w-2xl',
   }[maxWidth];
 
-  return (
+  // Render into <body>: page wrappers keep an entrance-animation transform, which would otherwise make
+  // this fixed overlay position itself inside the page instead of the whole screen (TC-050).
+  return createPortal(
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div
         className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
@@ -70,6 +73,7 @@ export const Modal: React.FC<ModalProps> = ({
           <div className="p-5">{children}</div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };

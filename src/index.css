@@ -50,10 +50,24 @@
 
 /* Dedicated Print Styles for Sterile QR Tag */
 @media print {
-  body * {
+  /* When the QR tag dialog is open, print only the tag: drop the app behind it and
+     undo the dialog's fixed position, transform and clipping so the label is not cut off. */
+  body:has(#printable-qr-tag) > #root {
+    display: none !important;
+  }
+  body:has(#printable-qr-tag) .fixed,
+  body:has(#printable-qr-tag) [role="dialog"] {
+    position: static !important;
+    transform: none !important;
+    overflow: visible !important;
+    min-height: 0 !important;
+  }
+  /* Only while the tag dialog is open; other pages (e.g. Print Report) print normally. */
+  body:has(#printable-qr-tag) * {
     visibility: hidden;
   }
-  #printable-qr-tag, #printable-qr-tag * {
+  body:has(#printable-qr-tag) #printable-qr-tag,
+  body:has(#printable-qr-tag) #printable-qr-tag * {
     visibility: visible;
   }
   #printable-qr-tag {

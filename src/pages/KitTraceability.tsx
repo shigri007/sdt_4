@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api.js';
+import { kitQrDataUrl } from '../services/kitQr.js';
+import { TAB_PATHS } from '../access.js';
 import { KitTraceabilityData, ProcessingAttempt, TimelineEvent } from '../types/index.js';
 import { StatusBadge } from '../components/StatusBadge.js';
 import { QRModal } from '../components/QRModal.js';
@@ -38,6 +40,13 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
     enabled: Boolean(kitCode),
   });
   const data = traceQuery.data;
+  // Generated in the browser so the QR holds the full trace link for this site.
+  const qrQuery = useQuery({
+    queryKey: ['kit-qr', data?.kit.kit_code, window.location.origin],
+    queryFn: () => kitQrDataUrl(data!.kit.kit_code),
+    enabled: Boolean(data?.kit.kit_code),
+    staleTime: Infinity,
+  });
   const isLoading = traceQuery.isLoading;
   const errorMsg = traceQuery.error instanceof Error ? traceQuery.error.message : '';
 
@@ -67,7 +76,8 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
     );
   }
 
-  const { kit, attempts, timeline, latestBatch, latestQc, qrCodeDataUrl } = data;
+  const { kit, attempts, timeline, latestBatch, latestQc } = data;
+  const qrCodeDataUrl = qrQuery.data ?? '';
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -116,7 +126,7 @@ export const KitTraceability: React.FC<KitTraceabilityProps> = ({ kitCode, onBac
             ) : null}
             <div className="text-[11px] text-slate-600">
               <div className="font-semibold text-slate-800">Scannable Safe Tag</div>
-              <div>Encoded: /kits/{kit.kit_code}</div>
+              <div>Opens: {TAB_PATHS.traceability}/{kit.kit_code}</div>
               <div className="text-[10px] text-teal-700 mt-0.5">Zero patient data stored</div>
             </div>
           </div>

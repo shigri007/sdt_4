@@ -66,8 +66,15 @@ const TraceabilityRoute: React.FC = () => {
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  // Keep the address the page was opened with (for example a scanned kit QR link or a refresh),
+  // so signing in or restoring the session returns there instead of always going to the dashboard.
+  const openedAt = React.useRef<string | null>(window.location.pathname + window.location.search);
   React.useEffect(() => {
-    if (user?.id) navigate(TAB_PATHS.dashboard, { replace: true });
+    if (!user?.id) return;
+    const target = openedAt.current;
+    openedAt.current = null; // later sign-ins (after sign-out) start at the dashboard
+    const isWorkspacePath = target && target !== '/' && !target.startsWith('/dashboard');
+    navigate(isWorkspacePath ? target : TAB_PATHS.dashboard, { replace: true });
   }, [user?.id]);
 
   const alertsQuery = useQuery({ queryKey: ['alerts'], queryFn: async () => (await api.getAlerts()).data, enabled: Boolean(user) });
