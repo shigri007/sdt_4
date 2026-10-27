@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api.js';
+import { downloadCsv } from '../services/csv.js';
 import { FileText, Download, Printer, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export const Reports: React.FC = () => {
@@ -16,21 +17,8 @@ export const Reports: React.FC = () => {
   const exportCsv = () => {
     if (reportData.length === 0) return;
 
-    const headers = Object.keys(reportData[0]).join(',');
-    const rows = reportData.map((row) =>
-      Object.values(row)
-        .map((val) => `"${String(val ?? '').replace(/"/g, '""')}"`)
-        .join(',')
-    );
-
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `steritrack-${reportType}-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Previously a data: link, which was cut off at the first "#" (e.g. "Tray #4"), so rows were lost (TC-044).
+    downloadCsv(reportData, `steritrack-${reportType}-${new Date().toISOString().split('T')[0]}.csv`);
   };
 
   return (

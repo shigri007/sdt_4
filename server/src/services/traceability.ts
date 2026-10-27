@@ -49,8 +49,9 @@ export class TraceabilityService {
     const kitType = db.store.kit_types.find(kt => kt.id === kit.kit_type_id);
     const department = db.store.departments.find(d => d.id === kit.department_owner_id);
 
-    // 1. Generate safe QR Code URL
-    const qrTargetUrl = `/kits/${kit.kit_code}`;
+    // 1. Generate safe QR Code URL. It must match the frontend trace route (/traceability/:kitCode);
+    // the web pages build the full https link for the current site from this same path.
+    const qrTargetUrl = `/traceability/${encodeURIComponent(kit.kit_code)}`;
     const qrCodeDataUrl = await QRCode.toDataURL(qrTargetUrl, {
       margin: 1,
       width: 240,
